@@ -1,1079 +1,206 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大阪旅遊規劃 App - 標準版 (協作版)</title>
-    <!-- 載入 Tailwind CSS -->
+    <title>共同資料連線測試</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 載入 Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- 載入 Vue 3 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    
-    <!-- 載入 Firebase 必要的 SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // 將 Firebase 模組暴露給全域環境，供 Vue setup 存取
-        window.FirebaseServices = { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, setLogLevel };
-    </script>
-
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb; /* 淺灰色背景 */
-        }
-        .app-container {
-            min-height: 100vh;
-            background-color: white; /* 應用程式主體為白色 */
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        .app-content {
-            height: calc(100vh - 80px - 28px); /* 底部導航和 user ID 顯示 */
-            overflow-y: auto;
-        }
-        .nav-button-active {
-            color: #4f46e5; /* 靛藍色 */
-            border-top: 3px solid #4f46e5;
-            background-color: #eff6ff;
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-        .loading-pulse {
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* 時間軸線條 */
-        .timeline {
-            position: relative;
-        }
-        .timeline-line {
-            position: absolute;
-            top: 0;
-            left: 17px; /* 根據圓點大小調整 */
-            width: 2px;
-            height: 100%;
-            background-color: #e5e7eb; /* 灰色線條 */
-            z-index: 0;
-        }
-        .timeline-item {
-            position: relative;
-            padding-left: 40px; /* 為圓點預留空間 */
-            padding-bottom: 20px;
-        }
-        .timeline-marker {
-            position: absolute;
-            top: 0;
-            left: 5px; /* 線條左側 */
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            z-index: 10;
+            background-color: #f7f7f7;
             display: flex;
-            align-items: center;
             justify-content: center;
-            border: 3px solid white; /* 讓圓點凸顯 */
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
         }
     </style>
 </head>
 <body>
 
-<div id="app" class="max-w-md mx-auto app-container">
+<div id="app" class="w-full max-w-md bg-white p-6 md:p-8 rounded-xl shadow-2xl border border-gray-100">
+    <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">
+        Firestore 連線測試
+    </h1>
+
+    <div id="status-message" class="text-center p-3 mb-6 rounded-lg font-medium text-sm transition duration-300">
+        正在初始化...
+    </div>
+
+    <div class="text-center mb-8">
+        <p class="text-lg text-gray-600 mb-2">共同計數器的值：</p>
+        <div id="counter-display" class="text-7xl font-extrabold text-indigo-600 p-4 bg-indigo-50 rounded-lg shadow-inner inline-block min-w-[100px]">
+            0
+        </div>
+    </div>
+
+    <button id="increment-button" disabled
+            class="w-full py-3 px-4 bg-indigo-500 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-600 transition duration-300 ease-in-out disabled:bg-gray-400 disabled:cursor-not-allowed transform hover:scale-[1.01] active:scale-[0.99]">
+        點擊增加 (未連線)
+    </button>
     
-    <!-- 頂部標題 -->
-    <header class="p-5 bg-indigo-600 text-white shadow-lg sticky top-0 z-10">
-        <h1 class="text-xl font-bold text-center">✈️ 大阪旅遊規劃工具 (協作版)</h1>
-    </header>
+    <p class="mt-4 text-xs text-gray-500 text-center">
+        使用者 ID: <span id="user-id" class="font-mono text-gray-700 break-all">N/A</span>
+    </p>
 
-    <!-- 內容區域 -->
-    <div v-if="isDataReady" class="p-4 app-content">
-        <!-- 1. 每日行程表 (時間軸) -->
-        <div v-if="currentTab === 'itinerary'" class="space-y-6">
-            <h2 class="text-2xl font-bold text-gray-800 border-b pb-2 mb-4">行程規劃 (時間軸)</h2>
-            
-            <!-- 橫向滑動日期選單 -->
-            <div class="flex overflow-x-scroll space-x-3 pb-3 snap-x scroll-smooth no-scrollbar">
-                <div v-for="date in dateList" :key="date.full" @click="currentDate = date.full"
-                     :class="{'bg-indigo-600 text-white shadow-lg': currentDate === date.full, 'bg-gray-100 text-gray-700 hover:bg-indigo-100': currentDate !== date.full}"
-                     class="flex-shrink-0 w-24 p-3 text-center rounded-lg cursor-pointer transition duration-300 snap-center">
-                    <p class="text-sm font-semibold">{{ date.dayOfWeek }}</p>
-                    <p class="text-xs">{{ date.display }}</p>
-                </div>
-            </div>
-
-            <!-- 天氣資訊卡片 -->
-            <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-lg flex items-center space-x-4 shadow-md">
-                <i data-lucide="cloud-sun" class="w-6 h-6 text-blue-600 flex-shrink-0"></i>
-                <div>
-                    <p class="font-medium text-gray-700">大阪氣溫:</p>
-                    <p :class="{'loading-pulse': weatherData === '載入中...' || weatherData === '無法載入天氣資訊'}" class="text-xl font-bold text-blue-800">{{ weatherData }}</p>
-                </div>
-            </div>
-
-            <!-- 新增行程表單 (包含類別和備註) -->
-            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-lg space-y-3">
-                <h3 class="font-semibold text-lg mb-2 text-gray-800">新增活動 ({{ currentDateDisplay }})</h3>
-                
-                <select v-model="newItem.category" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-700">
-                    <option disabled value="">選擇活動類別</option>
-                    <option v-for="(cat, key) in categoryMap" :value="key" :key="key">
-                        {{ cat.name }}
-                    </option>
-                </select>
-
-                <input v-model="newItem.time" type="time" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" required>
-                <input v-model="newItem.location" type="text" placeholder="地點/活動名稱" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" required>
-                <input v-model="newItem.note" type="text" placeholder="備註 (例如: 必吃章魚燒)" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                
-                <button @click="addItem" :disabled="!newItem.category || !newItem.location" class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-150 shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed">
-                    <i data-lucide="plus" class="inline-block w-4 h-4 mr-1"></i> 新增行程
-                </button>
-            </div>
-
-            <!-- 行程時間軸列表 -->
-            <div class="timeline">
-                <div class="timeline-line"></div>
-                <div v-for="(item, index) in filteredItinerary" :key="item.id" class="timeline-item">
-                    
-                    <!-- 時間軸圓點標記 (僅顏色) -->
-                    <div class="timeline-marker shadow-md" :class="getCategoryInfo(item.category).bg">
-                        <!-- 圖示已移至活動名稱旁 -->
-                    </div>
-
-                    <!-- 行程內容卡片 -->
-                    <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-200 transition duration-200 hover:shadow-xl ml-2">
-                        <div class="flex justify-between items-start mb-2">
-                            <div class="flex items-center space-x-2">
-                                <span class="font-extrabold text-2xl text-indigo-700">{{ item.time }}</span>
-                                <span class="text-sm text-gray-500">({{ getCategoryInfo(item.category).name }})</span>
-                            </div>
-                            <div class="flex space-x-2 flex-shrink-0">
-                                <!-- 編輯按鈕 -->
-                                <button @click="editItem(item.id)" class="text-indigo-500 p-1 rounded-full hover:bg-indigo-100 transition">
-                                    <i data-lucide="pencil" class="w-4 h-4"></i>
-                                </button>
-                                <!-- 刪除按鈕 -->
-                                <button @click="deleteItem(item.id)" class="text-red-500 p-1 rounded-full hover:bg-red-100 transition">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <p class="text-xl font-semibold text-gray-800 mb-1 flex items-center">
-                            <!-- Category Icon 移到這裡 -->
-                            <i :data-lucide="getCategoryInfo(item.category).icon" class="w-5 h-5 mr-2" :class="getCategoryInfo(item.category).color"></i>
-                            {{ item.location }}
-                        </p>
-                        
-                        <p v-if="item.note" class="text-sm text-gray-600 border-t pt-2 mt-2">
-                            <span class="font-medium text-gray-700">備註:</span> {{ item.note }}
-                        </p>
-                    </div>
-                </div>
-                <p v-if="filteredItinerary.length === 0" class="text-center text-gray-500 pt-4 p-4 rounded-xl bg-gray-100">此日期暫無行程，開始規劃吧！</p>
-            </div>
-            
-             <!-- 編輯行程 Modal (包含類別和備註) -->
-             <div v-if="editingItem !== null" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-xs space-y-4">
-                    <h3 class="text-xl font-bold mb-4 text-gray-800">編輯行程</h3>
-                    
-                    <select v-model="editingItem.category" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-700">
-                        <option v-for="(cat, key) in categoryMap" :value="key" :key="key">
-                            {{ cat.name }}
-                        </option>
-                    </select>
-
-                    <input v-model="editingItem.time" type="time" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="時間">
-                    <input v-model="editingItem.location" type="text" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="地點">
-                    <input v-model="editingItem.note" type="text" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="備註">
-                    
-                    <div class="flex justify-end space-x-3 pt-2">
-                        <button @click="cancelEdit" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition">取消</button>
-                        <button @click="saveEdit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-md">儲存</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. 分帳系統 -->
-        <div v-if="currentTab === 'splitter'" class="space-y-6">
-            <h2 class="text-2xl font-bold text-gray-800 border-b pb-2 mb-4">旅遊分帳結算</h2>
-            
-            <!-- 匯率資訊卡片 -->
-            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg flex items-center space-x-4 shadow-md">
-                <i data-lucide="trending-up" class="w-6 h-6 text-yellow-600 flex-shrink-0"></i>
-                <div>
-                    <p class="font-medium text-gray-700">當前匯率 JPY -> TWD:</p>
-                    <p :class="{'loading-pulse': exchangeRateText === '載入中...'}" class="text-xl font-bold text-yellow-800">
-                        1 JPY ≈ {{ exchangeRateText }} TWD
-                    </p>
-                </div>
-            </div>
-            
-            <!-- 參與者設定 -->
-            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-lg space-y-3">
-                <h3 class="font-semibold text-lg text-gray-800">參與者</h3>
-                <div class="flex space-x-2">
-                    <input v-model="newPersonName" type="text" placeholder="輸入人名" class="flex-grow p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                    <button @click="addPerson" class="bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition shadow-md">新增</button>
-                </div>
-                <div class="flex flex-wrap gap-2 pt-2">
-                    <span v-for="person in people" :key="person" class="bg-indigo-100 text-indigo-700 text-sm font-medium px-3 py-1 rounded-full flex items-center">
-                        {{ person }}
-                        <i data-lucide="x" class="w-4 h-4 ml-2 cursor-pointer text-indigo-500 hover:text-indigo-700" @click="removePerson(person)"></i>
-                    </span>
-                </div>
-                <p v-if="people.length === 0" class="text-sm text-red-500">請至少新增一位參與者才能記錄支出。</p>
-            </div>
-
-            <!-- 新增支出表單 -->
-            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-lg space-y-3">
-                <h3 class="font-semibold text-lg text-gray-800">新增支出</h3>
-                
-                <div>
-                    <label class="block font-medium text-sm mb-1 text-gray-700">金額 (JPY/日圓)</label>
-                    <input v-model.number="newExpense.amount" type="number" placeholder="日圓金額" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" min="0">
-                    <p v-if="exchangeRate > 0 && newExpense.amount > 0" class="text-sm text-green-600 mt-1">
-                        約等於: {{ formatCurrencyTWD(twdAmount) }} TWD
-                    </p>
-                </div>
-
-                <input v-model="newExpense.description" type="text" placeholder="說明 (例如: 晚餐)" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
-                <select v-model="newExpense.paidBy" class="w-full p-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 text-gray-700">
-                    <option disabled value="">誰付的錢?</option>
-                    <option v-for="person in people" :value="person" class="text-gray-800">{{ person }}</option>
-                </select>
-                <div class="space-y-1">
-                    <label class="block font-medium text-sm text-gray-700">共同分帳者：</label>
-                    <div class="flex flex-wrap gap-2">
-                        <label v-for="person in people" :key="person" class="flex items-center space-x-2 bg-gray-100 px-3 py-1 rounded-lg hover:bg-indigo-100 cursor-pointer">
-                            <input type="checkbox" :value="person" v-model="newExpense.participants" class="rounded text-indigo-600 focus:ring-indigo-500 border-gray-300">
-                            <span class="text-gray-700">{{ person }}</span>
-                        </label>
-                    </div>
-                </div>
-                <button @click="addExpense" :disabled="!isExpenseValid" class="w-full p-3 rounded-lg font-semibold transition duration-150 shadow-md"
-                    :class="{'bg-indigo-600 text-white hover:bg-indigo-700': isExpenseValid, 'bg-gray-400 text-gray-200 cursor-not-allowed': !isExpenseValid}">
-                    記錄支出 (JPY)
-                </button>
-            </div>
-
-            <!-- 支出紀錄列表 (新增的區塊，讓您看到已記錄的項目) -->
-            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-lg space-y-3">
-                <h3 class="font-semibold text-xl text-gray-800 flex items-center justify-between">
-                    <span>🧾 支出紀錄 ({{ expenses.length }})</span>
-                </h3>
-                <div v-if="expenses.length > 0" class="space-y-3">
-                    <div v-for="expense in expenses" :key="expense.id" class="p-3 border border-gray-100 rounded-lg bg-gray-50 flex justify-between items-start">
-                        <div class="flex-grow pr-4">
-                            <p class="font-extrabold text-lg text-gray-800">{{ formatCurrencyJPY(expense.amount) }}</p>
-                            <p class="font-medium text-sm text-indigo-700">{{ expense.description }}</p>
-                            <p class="text-xs text-gray-500 mt-1">
-                                由 <span class="font-semibold">{{ expense.paidBy }}</span> 墊付
-                                (參與者: <span class="text-indigo-500">{{ expense.participants.join(', ') }}</span>)
-                            </p>
-                        </div>
-                        <button @click="removeExpense(expense.id)" class="text-red-400 hover:text-red-600 transition p-1 rounded-full flex-shrink-0" aria-label="刪除支出">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
-                    </div>
-                </div>
-                <p v-else class="text-center text-gray-500 text-sm">目前沒有任何支出記錄。</p>
-            </div>
-
-            <!-- 結算結果 -->
-            <div class="bg-green-50 p-4 rounded-xl shadow-lg space-y-3 border-l-4 border-green-500">
-                <h3 class="text-xl font-bold text-gray-800 flex items-center justify-between">
-                    <span>📝 結算結果 (日圓)</span>
-                    <button @click="clearExpenses" class="text-sm text-red-500 hover:text-red-700 p-1 rounded-lg">清除所有紀錄</button>
-                </h3>
-                
-                <div v-if="settlements.length > 0" class="space-y-3">
-                    <p class="text-green-700 font-semibold">總計：{{ formatCurrencyJPY(totalAmount) }} (每人平均約 {{ formatCurrencyJPY(averageCost) }})</p>
-                    
-                    <div v-for="(settlement, index) in settlements" :key="index" class="bg-white p-3 rounded-lg border border-gray-200">
-                        <p class="font-semibold text-gray-700">{{ settlement.debtor }} <i data-lucide="arrow-right" class="inline-block w-4 h-4 mx-1 text-indigo-500"></i> {{ settlement.creditor }}</p>
-                        <p class="text-sm text-gray-500">應付金額: <span class="text-xl font-extrabold text-green-600">{{ formatCurrencyJPY(settlement.amount) }}</span></p>
-                    </div>
-                </div>
-                <p v-else class="text-center text-gray-500">請新增支出以進行分帳結算。</p>
-            </div>
-        </div>
-
-        <!-- 3. 地圖與導航 -->
-        <div v-if="currentTab === 'map'" class="space-y-6">
-            <h2 class="text-2xl font-bold text-gray-800 border-b pb-2 mb-4">地圖與導航</h2>
-            
-            <!-- 小地圖呈現 -->
-            <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-200">
-                <h3 class="font-semibold text-lg mb-3 text-gray-800">📌 今日行程地圖 ({{ currentDateDisplay }})</h3>
-                
-                <div v-if="filteredItinerary.length > 0" class="w-full rounded-lg overflow-hidden border-2 border-indigo-400 shadow-xl" style="height: 250px;">
-                    <!-- Google Maps Embed Iframe -->
-                    <iframe 
-                        :src="mapEmbedUrl" 
-                        width="100%" 
-                        height="100%" 
-                        frameborder="0" 
-                        style="border:0;" 
-                        allowfullscreen="" 
-                        loading="lazy" 
-                        referrerpolicy="no-referrer-when-downgrade">
-                    </iframe>
-                </div>
-                <div v-else class="text-center p-6 bg-gray-100 rounded-lg text-gray-500">
-                    <i data-lucide="map-pin-off" class="w-8 h-8 mx-auto text-red-400 mb-2"></i>
-                    <p class="font-medium">今日沒有行程，地圖預設顯示大阪城。</p>
-                </div>
-            </div>
-
-            <!-- 每日行程導航 -->
-            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-lg space-y-3">
-                <h3 class="font-semibold text-lg mb-3 text-gray-800">🗺️ 導航今日行程地點</h3>
-                <div class="text-sm text-gray-600">
-                    <p v-if="filteredItinerary.length > 0">已選定 {{ filteredItinerary.length }} 個地點</p>
-                    <p v-else class="text-red-500">今日無行程可導航。</p>
-                </div>
-                <button @click="openItineraryMap" :disabled="filteredItinerary.length === 0"
-                    class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold transition duration-150 shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed hover:bg-indigo-700">
-                    <i data-lucide="route" class="inline-block w-4 h-4 mr-1"></i> 導航所有今日行程
-                </button>
-            </div>
-
-            <!-- 當前位置顯示 -->
-            <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-lg space-y-3">
-                <h3 class="font-semibold text-lg mb-3 text-gray-800">📍 顯示我的當前位置</h3>
-                <button @click="getCurrentLocation" 
-                    class="w-full bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition duration-150 shadow-md">
-                    <i data-lucide="locate" class="inline-block w-4 h-4 mr-1"></i> 獲取我的位置
-                </button>
-                <div v-if="userLatitude && userLongitude" class="bg-green-100 text-green-800 p-3 rounded-lg text-sm border border-green-300 space-y-1">
-                    <p class="font-medium">經度: <span class="font-mono">{{ userLongitude.toFixed(6) }}</span></p>
-                    <p class="font-medium">緯度: <span class="font-mono">{{ userLatitude.toFixed(6) }}</span></p>
-                    <p class="text-xs text-green-600">位置已成功獲取！</p>
-                </div>
-                <div v-if="locationError" class="bg-red-100 text-red-800 p-3 rounded-lg text-sm border border-red-300">
-                    錯誤: {{ locationError }}
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 載入中/錯誤畫面 -->
-    <div v-else class="flex flex-col items-center justify-center p-10 h-[80vh]">
-        <div v-if="loadingError" class="text-center p-6 bg-red-100 border-l-4 border-red-500 text-red-700 rounded-md">
-            <p class="font-bold mb-2">資料載入失敗</p>
-            <p class="text-sm">{{ loadingError }}</p>
-            <p class="text-xs mt-2">請檢查 Firebase 安全規則設定是否正確。</p>
-        </div>
-        <div v-else class="flex flex-col items-center">
-            <div class="spinner border-4 border-gray-200 border-t-indigo-600 rounded-full w-12 h-12 mb-3 animate-spin"></div>
-            <p class="text-gray-600 font-medium">正在載入雲端資料並進行驗證...</p>
-        </div>
-    </div>
-
-    <!-- 底部導航列 -->
-    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 shadow-xl z-20 h-20 p-2">
-        <div class="flex justify-around items-center h-full">
-            <button @click="currentTab = 'itinerary'" 
-                    :class="{'nav-button-active text-indigo-600': currentTab === 'itinerary', 'text-gray-500 hover:bg-gray-100': currentTab !== 'itinerary'}"
-                    class="flex flex-col items-center p-2 rounded-lg text-xs font-medium transition duration-200 w-1/3 h-full justify-center">
-                <i data-lucide="calendar-check" class="w-6 h-6 mb-1"></i>
-                <span>行程</span>
-            </button>
-            <button @click="currentTab = 'splitter'" 
-                    :class="{'nav-button-active text-indigo-600': currentTab === 'splitter', 'text-gray-500 hover:bg-gray-100': currentTab !== 'splitter'}"
-                    class="flex flex-col items-center p-2 rounded-lg text-xs font-medium transition duration-200 w-1/3 h-full justify-center">
-                <i data-lucide="users" class="w-6 h-6 mb-1"></i>
-                <span>分帳</span>
-            </button>
-            <button @click="currentTab = 'map'" 
-                    :class="{'nav-button-active text-indigo-600': currentTab === 'map', 'text-gray-500 hover:bg-gray-100': currentTab !== 'map'}"
-                    class="flex flex-col items-center p-2 rounded-lg text-xs font-medium transition duration-200 w-1/3 h-full justify-center">
-                <i data-lucide="map" class="w-6 h-6 mb-1"></i>
-                <span>地圖</span>
-            </button>
-        </div>
-    </nav>
-    <!-- 使用者 ID 顯示 (方便協作) -->
-    <div v-if="userId" class="fixed bottom-[80px] left-0 right-0 max-w-md mx-auto text-center text-xs text-gray-400 bg-gray-50 py-0.5 border-t border-gray-200 shadow-inner">
-        協作用戶 ID: <span class="font-mono text-gray-600">{{ userId }}</span>
-    </div>
 </div>
 
 <script type="module">
-    const { createApp, ref, computed, nextTick, reactive, onMounted, watch } = Vue;
-
-    // Firebase 服務將從全局 window.FirebaseServices 獲取
-    const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, setLogLevel } = window.FirebaseServices;
-
-    // --- 輔助函數 ---
-    const formatDate = (date) => {
-        const d = new Date(date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-
-    const getDayName = (date) => {
-        const days = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
-        return days[new Date(date).getDay()];
-    };
-
-    // --- 指數退避重試邏輯 (與 API 相關) ---
-    const retryFetch = async (url, options, maxRetries = 3) => {
-        let lastError = null;
-        for (let attempt = 0; attempt < maxRetries; attempt++) {
-            try {
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const result = await response.json();
-                return result; 
-            } catch (error) {
-                lastError = error;
-                console.error(`Attempt ${attempt + 1} failed:`, error);
-                if (attempt < maxRetries - 1) {
-                    const delay = Math.pow(2, attempt) * 1000;
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
-        }
-        throw new Error("Failed to fetch data after multiple retries. Last error: " + lastError.message);
-    };
-
-    // --- 行程類別配置 ---
-    const categoryMap = {
-        'flight': { name: '航班', icon: 'plane', color: 'text-blue-500', bg: 'bg-blue-500' },
-        'food': { name: '美食', icon: 'utensils', color: 'text-red-500', bg: 'bg-red-500' },
-        'shopping': { name: '購物', icon: 'shopping-bag', color: 'text-purple-500', bg: 'bg-purple-500' },
-        'attraction': { name: '景點', icon: 'map-pin', color: 'text-green-500', bg: 'bg-green-500' },
-        'accommodation': { name: '住宿', icon: 'hotel', color: 'text-yellow-700', bg: 'bg-yellow-500' },
-        'other': { name: '其他', icon: 'list-todo', color: 'text-gray-500', bg: 'bg-gray-500' }
-    };
-
-
-    const App = {
-        setup() {
-            // --- Firebase 狀態 ---
-            const userId = ref(null);
-            const isAuthReady = ref(false);
-            const isDataReady = ref(false);
-            const loadingError = ref(null);
-            
-            let db = null;
-            let itinerariesColRef = null;
-            let expensesColRef = null;
-            let peopleDocRef = null; // 單獨的文件來存儲參與者列表
-            
-            const PEOPLE_DOC_ID = 'participants';
-
-            // --- 應用程式狀態 ---
-            const currentTab = ref('itinerary');
-            const today = new Date();
-            const currentDate = ref(formatDate(today)); 
-            const editingItem = ref(null); 
-            
-            // Firebase 綁定的響應式資料
-            const itinerary = ref([]);
-            const people = ref([]);
-            const expenses = ref([]);
-
-            const newItem = ref({ time: '12:00', location: '', category: '', note: '' });
-
-            // --- Firebase 初始化與資料同步邏輯 ---
-            const initFirebase = async () => {
-                try {
-                    setLogLevel('debug'); // 開啟 Firebase 偵錯日誌
-                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-                    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                    
-                    const app = initializeApp(firebaseConfig);
-                    const auth = getAuth(app);
-                    db = getFirestore(app);
-
-                    // 1. 進行使用者認證
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                    
-                    // 2. 監聽認證狀態，獲取 userId 並標記 AuthReady
-                    onAuthStateChanged(auth, (user) => {
-                        if (user) {
-                            userId.value = user.uid;
-                            isAuthReady.value = true;
-                            // 3. 設置 Firestore 集合參考 (使用 Public 共享路徑)
-                            const basePath = `artifacts/${appId}/public/data`;
-                            itinerariesColRef = collection(db, `${basePath}/itineraries`);
-                            expensesColRef = collection(db, `${basePath}/expenses`);
-                            peopleDocRef = doc(db, `${basePath}/people`, PEOPLE_DOC_ID);
-                            
-                            // 4. 啟動即時資料監聽
-                            setupFirestoreListeners();
-                        } else {
-                            // 應該不會發生，因為我們強制匿名登入
-                            console.error("User not authenticated.");
-                            isAuthReady.value = false;
-                            isDataReady.value = false;
-                        }
-                    });
-
-                } catch (error) {
-                    loadingError.value = `Firebase 初始化失敗: ${error.message}`;
-                    console.error("Firebase Initialization Error:", error);
-                }
-            };
-            
-            const setupFirestoreListeners = () => {
-                if (!isAuthReady.value || !db) return;
-                
-                let listenersCompleted = 0;
-                const requiredListeners = 3;
-                const checkCompletion = () => {
-                    listenersCompleted++;
-                    if (listenersCompleted === requiredListeners) {
-                        isDataReady.value = true;
-                        nextTick(() => lucide.createIcons());
-                    }
-                };
-
-                // a) 監聽 行程 (itineraries)
-                onSnapshot(itinerariesColRef, (snapshot) => {
-                    const items = [];
-                    snapshot.forEach(doc => {
-                        items.push({ id: doc.id, ...doc.data() });
-                    });
-                    itinerary.value = items;
-                    checkCompletion();
-                }, (error) => {
-                    loadingError.value = `行程資料載入失敗: ${error.message}`;
-                    checkCompletion();
-                });
-
-                // b) 監聽 支出 (expenses)
-                onSnapshot(expensesColRef, (snapshot) => {
-                    const items = [];
-                    snapshot.forEach(doc => {
-                        items.push({ id: doc.id, ...doc.data() });
-                    });
-                    expenses.value = items;
-                    checkCompletion();
-                }, (error) => {
-                    loadingError.value = `支出資料載入失敗: ${error.message}`;
-                    checkCompletion();
-                });
-                
-                // c) 監聽 參與者 (peopleDocRef)
-                onSnapshot(peopleDocRef, (docSnapshot) => {
-                    if (docSnapshot.exists()) {
-                        const data = docSnapshot.data();
-                        people.value = data.names || [];
-                    } else {
-                        // 如果文件不存在，設置一個空的列表 (並在後續新增時建立文件)
-                        people.value = []; 
-                    }
-                    checkCompletion();
-                }, (error) => {
-                    loadingError.value = `參與者資料載入失敗: ${error.message}`;
-                    checkCompletion();
-                });
-            };
-
-            // --- 1. 行程規劃 CRUD ---
-            
-            const addItem = async () => {
-                if (!isDataReady.value || !newItem.value.time || !newItem.value.location || !newItem.value.category) return;
-                try {
-                    const itemData = {
-                        date: currentDate.value, 
-                        time: newItem.value.time, 
-                        location: newItem.value.location, 
-                        category: newItem.value.category, 
-                        note: newItem.value.note,
-                        createdAt: Date.now(), // 用於排序
-                        createdBy: userId.value,
-                    };
-                    await addDoc(itinerariesColRef, itemData);
-                    // 重設部分欄位
-                    newItem.value.location = '';
-                    newItem.value.note = '';
-                    // 保持 category 預設值不變
-                } catch (e) {
-                    console.error("Error adding document: ", e);
-                }
-            };
-
-            const deleteItem = async (itemId) => {
-                if (!isDataReady.value) return;
-                try {
-                    await deleteDoc(doc(itinerariesColRef, itemId));
-                } catch (e) {
-                    console.error("Error deleting document: ", e);
-                }
-            };
-
-            const saveEdit = async () => {
-                if (!isDataReady.value || !editingItem.value.category || !editingItem.value.location) return;
-
-                const id = editingItem.value.id;
-                // 移除 id 屬性後再更新
-                const { id: _, ...dataToUpdate } = editingItem.value; 
-
-                try {
-                    await updateDoc(doc(itinerariesColRef, id), dataToUpdate);
-                    editingItem.value = null;
-                } catch (e) {
-                    console.error("Error updating document: ", e);
-                }
-            };
-            
-            // --- 2. 分帳系統 CRUD (People & Expenses) ---
-
-            const addPerson = async () => {
-                if (!isDataReady.value) return;
-                const name = newPersonName.value.trim();
-                if (name && !people.value.includes(name)) {
-                    const updatedPeople = [...people.value, name];
-                    try {
-                        // 使用 setDoc 合併更新，如果文件不存在則建立
-                        await setDoc(peopleDocRef, { names: updatedPeople }, { merge: true });
-                        newPersonName.value = '';
-                    } catch (e) {
-                        console.error("Error adding person: ", e);
-                    }
-                }
-            };
-
-            const removePerson = async (personToRemove) => {
-                if (!isDataReady.value) return;
-                
-                const updatedPeople = people.value.filter(p => p !== personToRemove);
-                
-                try {
-                    // 1. 更新參與者列表
-                    await setDoc(peopleDocRef, { names: updatedPeople }, { merge: true });
-
-                    // 2. 批量更新受影響的支出記錄 (這在 Firestore 中稍微複雜，這裡只處理 people 列表本身)
-                    // 實際應用中，可能需要通知使用者手動檢查/修正相關支出。
-                    // 這裡先簡單處理，確保 UI 的 people 列表正確。
-                } catch (e) {
-                    console.error("Error removing person: ", e);
-                }
-            };
-
-            const addExpense = async () => {
-                if (!isDataReady.value || !isExpenseValid.value) return;
-                try {
-                    const expenseData = {
-                        amount: newExpense.amount,
-                        description: newExpense.description,
-                        paidBy: newExpense.paidBy,
-                        participants: newExpense.participants,
-                        createdAt: Date.now(),
-                        createdBy: userId.value,
-                    };
-                    await addDoc(expensesColRef, expenseData);
-                    
-                    // 重設表單
-                    Object.assign(newExpense, { amount: null, description: '', paidBy: '', participants: [] });
-                } catch (e) {
-                    console.error("Error adding expense: ", e);
-                }
-            };
-
-            const removeExpense = async (expenseId) => {
-                if (!isDataReady.value) return;
-                try {
-                    await deleteDoc(doc(expensesColRef, expenseId));
-                } catch (e) {
-                    console.error("Error deleting expense: ", e);
-                }
-            };
-
-            const clearExpenses = async () => {
-                 if (!isDataReady.value) return;
-                 // 批次刪除 (需手動實現，這裡我們只是清除 Vue 狀態，但實際應刪除 Firestore 文件)
-                 // 由於我們不能在批次中進行查詢，這裡只能提供一個簡單的提示，鼓勵使用 deleteDoc
-                 console.log("Warning: Clearing all expenses requires batch delete. Please implement batch delete in a production environment.");
-                 
-                 // 為了功能運行，我們將每個文件逐一刪除
-                 expenses.value.forEach(async (exp) => {
-                     try {
-                         await deleteDoc(doc(expensesColRef, exp.id));
-                     } catch (e) {
-                         console.error("Error batch deleting expense:", exp.id, e);
-                     }
-                 });
-            };
-            
-            // --- 輔助計算屬性與函數 ---
-
-            const dateList = computed(() => {
-                const dates = [];
-                for (let i = 0; i < 7; i++) {
-                    const d = new Date(today);
-                    d.setDate(today.getDate() + i);
-                    dates.push({
-                        full: formatDate(d),
-                        display: `${d.getMonth() + 1}/${d.getDate()}`,
-                        dayOfWeek: getDayName(d),
-                    });
-                }
-                return dates;
-            });
-            
-            const currentDateDisplay = computed(() => {
-                const dateObj = dateList.value.find(d => d.full === currentDate.value);
-                return dateObj ? `${dateObj.display} (${dateObj.dayOfWeek})` : currentDate.value;
-            });
-
-            const filteredItinerary = computed(() => {
-                return itinerary.value
-                    .filter(item => item.date === currentDate.value)
-                    .sort((a, b) => (a.time > b.time ? 1 : -1));
-            });
-
-            const getCategoryInfo = (categoryKey) => {
-                return categoryMap[categoryKey] || categoryMap['other'];
-            };
-            
-            const editItem = (itemId) => {
-                const itemToEdit = itinerary.value.find(item => item.id === itemId);
-                if (itemToEdit) {
-                    editingItem.value = JSON.parse(JSON.stringify(itemToEdit));
-                }
-            };
-
-            const cancelEdit = () => {
-                editingItem.value = null;
-            };
-
-            watch(currentDate, (newDate) => {
-                newItem.value.date = newDate;
-            });
-
-            const isExpenseValid = computed(() => {
-                return newExpense.amount > 0 && 
-                       newExpense.description.trim() !== '' && 
-                       newExpense.paidBy !== '' && 
-                       newExpense.participants.length > 0;
-            });
-
-            // 計算 TWD 等值金額
-            const twdAmount = computed(() => {
-                if (newExpense.amount > 0 && exchangeRate.value > 0) {
-                    return newExpense.amount * exchangeRate.value;
-                }
-                return 0;
-            });
-
-            const formatCurrencyJPY = (amount) => {
-                const roundedAmount = Math.round(amount); 
-                return new Intl.NumberFormat('ja-JP', {
-                    style: 'currency',
-                    currency: 'JPY',
-                    maximumFractionDigits: 0
-                }).format(roundedAmount);
-            };
-
-            const formatCurrencyTWD = (amount) => {
-                const roundedAmount = Math.round(amount); 
-                return new Intl.NumberFormat('zh-TW', {
-                    style: 'currency',
-                    currency: 'TWD',
-                    maximumFractionDigits: 0
-                }).format(roundedAmount);
-            };
-
-            const totalAmount = computed(() => {
-                return expenses.value.reduce((sum, exp) => sum + exp.amount, 0);
-            });
-
-            const averageCost = computed(() => {
-                if (people.value.length === 0) return 0;
-                return totalAmount.value / people.value.length;
-            });
-
-            // 結算邏輯與之前相同，但現在使用 Firestore 資料
-            const settlements = computed(() => {
-                if (people.value.length === 0 || expenses.value.length === 0) return [];
-
-                const balances = {};
-                people.value.forEach(p => balances[p] = 0);
-
-                for (const expense of expenses.value) {
-                    if (expense.participants.length === 0) continue; 
-                    const costPerPerson = expense.amount / expense.participants.length;
-                    
-                    balances[expense.paidBy] = (balances[expense.paidBy] || 0) + expense.amount; 
-                    
-                    for (const participant of expense.participants) {
-                        balances[participant] = (balances[participant] || 0) - costPerPerson;
-                    }
-                }
-
-                let creditors = [];
-                let debtors = [];   
-
-                const relevantPeople = people.value.filter(p => Math.abs(balances[p]) > 1);
-                
-                for (const person of relevantPeople) {
-                    const balance = balances[person];
-                    if (balance > 1) { 
-                        creditors.push({ person, amount: balance });
-                    } else if (balance < -1) { 
-                        debtors.push({ person, amount: -balance });
-                    }
-                }
-
-                const finalSettlements = [];
-                let i = 0; 
-                let j = 0; 
-
-                while (i < debtors.length && j < creditors.length) {
-                    let debtor = debtors[i];
-                    let creditor = creditors[j];
-
-                    const transferAmount = Math.min(debtor.amount, creditor.amount);
-
-                    finalSettlements.push({
-                        debtor: debtor.person,
-                        creditor: creditor.person,
-                        amount: transferAmount
-                    });
-
-                    debtor.amount -= transferAmount;
-                    creditor.amount -= transferAmount;
-
-                    if (debtor.amount < 1) { 
-                        i++;
-                    }
-                    if (creditor.amount < 1) { 
-                        j++;
-                    }
-                }
-
-                return finalSettlements;
-            });
-
-
-            // --- 3. 地圖與導航邏輯 (不變) ---
-            const userLatitude = ref(null);
-            const userLongitude = ref(null);
-            const locationError = ref('');
-            const mapEmbedUrl = ref(''); 
-
-            const generateMapEmbedUrl = () => {
-                const locations = filteredItinerary.value.map(item => item.location);
-                let fullQuery;
-                if (locations.length > 0) {
-                    fullQuery = `大阪 ${locations.join(' and ')}`;
-                } else {
-                    fullQuery = '大阪城';
-                }
-                const url = `https://maps.google.com/maps?q=${encodeURIComponent(fullQuery)}&output=embed&z=12`;
-                mapEmbedUrl.value = url;
-            };
-
-            const openItineraryMap = () => {
-                if (filteredItinerary.value.length === 0) {
-                    return;
-                }
-                const finalDestination = filteredItinerary.value[filteredItinerary.value.length - 1].location;
-                const waypoints = filteredItinerary.value.slice(0, -1).map(i => i.location).join('|');
-                const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(finalDestination)}&waypoints=${encodeURIComponent(waypoints)}&travelmode=driving`;
-                window.open(url, '_blank');
-            };
-
-            const getCurrentLocation = () => {
-                locationError.value = '正在定位...';
-                userLatitude.value = null;
-                userLongitude.value = null;
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            userLatitude.value = position.coords.latitude;
-                            userLongitude.value = position.coords.longitude;
-                            locationError.value = '';
-                        },
-                        (error) => {
-                            locationError.value = `無法取得位置 (${error.code}): ${error.message}`;
-                        },
-                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-                    );
-                } else {
-                    locationError.value = '您的瀏覽器不支援地理定位功能。';
-                }
-            };
-            
-            // --- 4. 天氣與匯率邏輯 (不變，但使用 retryFetch) ---
-            const weatherData = ref('載入中...');
-            const exchangeRate = ref(0.0);
-            const exchangeRateText = ref('載入中...');
-
-            const fetchExchangeRate = async () => {
-                exchangeRateText.value = '載入中...';
-                const systemPrompt = "You are a specialized financial data tool. When asked for an exchange rate, provide only the numeric value of the rate, rounded to 4 decimal places, without any currency symbols or extra text.";
-                const userQuery = "Current exchange rate for 1 JPY to TWD.";
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
-                const payload = {
-                    contents: [{ parts: [{ text: userQuery }] }],
-                    tools: [{ "google_search": {} }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                };
-
-                try {
-                    const result = await retryFetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                    const rate = parseFloat(text.trim());
-
-                    if (!isNaN(rate) && rate > 0) {
-                        exchangeRate.value = rate;
-                        exchangeRateText.value = rate.toFixed(4);
-                    } else {
-                        throw new Error("Invalid rate returned.");
-                    }
-                } catch (error) {
-                    exchangeRateText.value = '無法取得 (請稍後重試)';
-                    console.error("Failed to fetch exchange rate:", error);
-                }
-            };
-
-            const fetchWeatherForOsaka = async () => {
-                weatherData.value = '載入中...';
-                const systemPrompt = "You are a specialized weather search tool. When asked for the current temperature, provide only the temperature in Celsius (°C) and the weather condition in a concise phrase, like '25°C, Sunny'. Do not include location name, time, or extra text.";
-                const userQuery = "What is the current temperature and weather condition in Osaka, Japan in Celsius?";
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
-                const payload = {
-                    contents: [{ parts: [{ text: userQuery }] }],
-                    tools: [{ "google_search": {} }],
-                    systemInstruction: { parts: [{ text: systemPrompt }] },
-                };
-
-                try {
-                    const result = await retryFetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-                    if (text) {
-                        weatherData.value = text.trim();
-                    } else {
-                        throw new Error("API response text is empty or malformed.");
-                    }
-                } catch (error) {
-                    weatherData.value = '無法載入天氣資訊';
-                    console.error("Failed to fetch weather data after multiple retries.", error);
-                }
-            };
-            
-            // --- 初始化與監聽 ---
-            
-            watch([currentTab, filteredItinerary, currentDate], (newValues) => {
-                if (currentTab.value === 'map') {
-                    generateMapEmbedUrl();
-                    nextTick(() => lucide.createIcons()); 
-                }
-            }, { deep: true });
-
-            onMounted(() => {
-                initFirebase(); // 開始初始化 Firebase
-                fetchWeatherForOsaka(); 
-                fetchExchangeRate(); 
-                nextTick(() => lucide.createIcons());
-            });
-
-
-            return {
-                // Firebase 狀態
-                userId,
-                isDataReady,
-                loadingError,
-                // 基礎狀態
-                currentTab,
-                // 行程
-                itinerary,
-                newItem,
-                currentDate,
-                dateList,
-                currentDateDisplay,
-                filteredItinerary,
-                editingItem,
-                addItem,
-                deleteItem,
-                editItem,
-                saveEdit,
-                cancelEdit,
-                categoryMap,
-                getCategoryInfo, 
-                // 分帳
-                people,
-                expenses,
-                newPersonName,
-                addPerson,
-                removePerson,
-                newExpense,
-                addExpense,
-                removeExpense,
-                isExpenseValid,
-                totalAmount,
-                averageCost,
-                settlements,
-                formatCurrencyJPY,
-                formatCurrencyTWD, 
-                clearExpenses,
-                exchangeRate,
-                exchangeRateText,
-                twdAmount,
-                // 地圖
-                openItineraryMap, 
-                userLatitude,
-                userLongitude,
-                locationError,
-                getCurrentLocation, 
-                mapEmbedUrl, 
-                // 天氣
-                weatherData,
-            };
-        }
-    };
-
-    createApp(App).mount('#app');
+    // 導入 Firebase 模組
+    import { initializeApp, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"; // <-- FIX: setLogLevel 從這裡導入
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // --- 必備的全域變數檢查與設定 ---
+    // 應用程式 ID 和 Firebase 設定是運行環境提供的。
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
     
-    // 監聽 DOM 變化重新渲染 Lucide 圖標
-    document.addEventListener('DOMContentLoaded', () => {
-        lucide.createIcons();
-    });
+    // 設定 Firebase 服務變數
+    let app, db, auth;
+    let currentUserId = null;
+    const COUNTER_PATH = `/artifacts/${appId}/public/data/debug_counter/main_count`;
+
+    // UI 元素
+    const statusMessage = document.getElementById('status-message');
+    const counterDisplay = document.getElementById('counter-display');
+    const incrementButton = document.getElementById('increment-button');
+    const userIdDisplay = document.getElementById('user-id');
+
+    // 輔助函數：更新狀態訊息
+    function updateStatus(message, type = 'info') {
+        let bgColor = 'bg-blue-100 text-blue-700';
+        if (type === 'success') bgColor = 'bg-green-100 text-green-700';
+        if (type === 'error') bgColor = 'bg-red-100 text-red-700';
+        
+        statusMessage.className = `text-center p-3 mb-6 rounded-lg font-medium text-sm transition duration-300 ${bgColor}`;
+        statusMessage.textContent = message;
+    }
+
+    // 核心函數：初始化 Firebase 和執行認證
+    async function initializeFirebaseAndAuthenticate() {
+        try {
+            // 啟用 Firebase 偵錯日誌
+            setLogLevel('debug');
+            
+            // 1. 初始化 App
+            updateStatus("初始化 Firebase...", 'info');
+            if (Object.keys(firebaseConfig).length === 0) {
+                 throw new Error("Firebase configuration is missing.");
+            }
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+
+            // 2. 認證流程
+            updateStatus("正在進行使用者認證...", 'info');
+            if (initialAuthToken) {
+                // 使用提供的 Custom Token 登入
+                await signInWithCustomToken(auth, initialAuthToken);
+            } else {
+                // 如果沒有 Token，則匿名登入
+                await signInAnonymously(auth);
+            }
+            
+            // 3. 監聽認證狀態變更 (確保 auth.currentUser 是最新的)
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    userIdDisplay.textContent = currentUserId;
+                    updateStatus("✅ 連線成功！正在載入資料...", 'success');
+                    startDataListener(currentUserId);
+                } else {
+                    currentUserId = null;
+                    userIdDisplay.textContent = 'N/A';
+                    updateStatus("⚠️ 未認證或登入失敗。請檢查您的 Token。", 'error');
+                }
+            });
+
+        } catch (error) {
+            console.error("Firebase 初始化或認證錯誤:", error);
+            updateStatus(`❌ 錯誤: ${error.message}. 請檢查 Console 訊息。`, 'error');
+        }
+    }
+
+    // 核心函數：啟動即時資料監聽 (onSnapshot)
+    function startDataListener(userId) {
+        if (!db || !userId) {
+            console.error("DB 或 User ID 不可用，無法啟動監聽。");
+            return;
+        }
+
+        const docRef = doc(db, COUNTER_PATH);
+
+        // 監聽文件變更
+        onSnapshot(docRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                // 資料存在，更新計數器
+                const data = docSnapshot.data();
+                const count = data.value || 0;
+                counterDisplay.textContent = count;
+                updateStatus("✅ 資料連線正常。計數器已更新。", 'success');
+            } else {
+                // 文件不存在，初始化它 (設為 0)
+                setDoc(docRef, { value: 0, initializedBy: userId, timestamp: new Date() }, { merge: true })
+                    .then(() => {
+                        updateStatus("✅ 資料庫文件已初始化為 0。", 'success');
+                        counterDisplay.textContent = 0;
+                    })
+                    .catch(err => {
+                        console.error("初始化文件時出錯:", err);
+                        updateStatus("❌ 錯誤: 無法初始化計數器文件。", 'error');
+                    });
+            }
+            // 成功連接後啟用按鈕
+            incrementButton.disabled = false;
+            incrementButton.textContent = "點擊增加";
+
+        }, (error) => {
+            console.error("Firestore 即時監聽錯誤 (onSnapshot):", error);
+            // 這裡很可能是因為規則不允許讀取 (Permission denied)
+            updateStatus("❌ 連線錯誤: 請檢查 Firestore 規則是否允許讀/寫。", 'error');
+            incrementButton.disabled = true;
+            incrementButton.textContent = "連線失敗，請檢查規則";
+        });
+    }
+
+    // 核心函數：增加計數器 (交易操作更安全，但這裡用簡單寫入)
+    async function incrementCounter() {
+        if (!db) return;
+        
+        // 為了簡單起見，我們在這裡使用簡單的讀取和寫入，
+        // 但在實際應用中，您應該使用交易 (Transaction) 來保證資料完整性。
+        incrementButton.disabled = true;
+        const docRef = doc(db, COUNTER_PATH);
+        
+        try {
+            const docSnap = await getDoc(docRef);
+            let newValue = 0;
+            if (docSnap.exists()) {
+                newValue = (docSnap.data().value || 0) + 1;
+            } else {
+                newValue = 1;
+            }
+            
+            await setDoc(docRef, { value: newValue, lastUpdatedBy: currentUserId, timestamp: new Date() }, { merge: true });
+            // onSnapshot 會自動更新 UI
+            
+        } catch (error) {
+            console.error("增加計數器失敗:", error);
+            updateStatus("❌ 寫入失敗！請檢查您的規則設定。", 'error');
+        } finally {
+            incrementButton.disabled = false;
+        }
+    }
+
+    // 設置事件監聽器
+    incrementButton.addEventListener('click', incrementCounter);
+
+    // 網頁載入完成後開始執行
+    window.onload = initializeFirebaseAndAuthenticate;
 
 </script>
 
