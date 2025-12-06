@@ -67,7 +67,8 @@
         <!-- Loading Overlay -->
         <div v-if="isLoading" class="absolute inset-0 z-50 bg-milk-100/90 flex flex-col items-center justify-center backdrop-blur-sm">
             <i class="ph-duotone ph-spinner animate-spin text-4xl text-milk-600 mb-2"></i>
-            <span class="text-milk-600 font-bold tracking-widest">載入中...</span>
+            <span class="text-milk-600 font-bold tracking-widest mt-2">載入中...</span>
+            <div class="text-xs text-milk-400 mt-2">若卡住太久請重新整理</div>
         </div>
 
         <!-- Header -->
@@ -360,6 +361,9 @@
                 // 自動切換環境：如果在預覽環境（Sandbox），使用注入的 __firebase_config
                 // 如果在正式部署（下載後），使用手動設定 manualConfig
                 let config = null;
+                // 用來標記是否為使用者自己填寫的設定
+                let isManualConfig = false;
+
                 if (typeof __firebase_config !== 'undefined') {
                     config = JSON.parse(__firebase_config);
                 } else {
@@ -372,6 +376,7 @@
                         messagingSenderId: "165141178000",
                         appId: "1:165141178000:web:41481978f4c68c1c301a15"
                     };
+                    isManualConfig = true;
                 }
                 
                 // --- App Initialization ---
@@ -380,6 +385,9 @@
                 const user = ref(null);
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                 
+                // 檢查是否設定了 API Key
+                const isConfigured = !isManualConfig || (config.apiKey !== "您的_API_KEY");
+
                 try {
                     app = initializeApp(config);
                     auth = getAuth(app);
@@ -565,11 +573,25 @@
                 };
 
                 const initAuth = async () => {
-                    if (auth) {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                             await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                             await signInAnonymously(auth);
+                    if (auth && isConfigured) {
+                        try {
+                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                 await signInWithCustomToken(auth, __initial_auth_token);
+                            } else {
+                                 await signInAnonymously(auth);
+                            }
+                        } catch (e) {
+                            console.error("Auth failed:", e);
+                            alert("登入失敗，將進入離線模式。若您在 GitHub Pages，請檢查：\n1. 是否已填寫 API Key。\n2. Firebase Console 的 Authorized Domains 是否有加入您的 GitHub Pages 網址。");
+                            isLoading.value = false;
+                            initDefaultData();
+                        }
+                    } else {
+                        console.warn("未設定 API Key 或處於離線模式");
+                        isLoading.value = false;
+                        initDefaultData();
+                        if (!isConfigured && typeof __firebase_config === 'undefined') {
+                             alert("提醒：您尚未填寫 Firebase API Key，目前為離線預覽模式，資料無法儲存。\n請在程式碼中填入您的 Firebase 設定。");
                         }
                     }
                 };
@@ -604,10 +626,6 @@
                         fetchWeather(); 
                         
                         try {
-                            // 使用 "artifacts/{appId}/public/data/trips/{tripId}" 格式，確保在預覽環境也能寫入
-                            // 如果是下載版 (manual config)，此路徑可能需要調整為 "trips/{tripId}"，但為了統一先用通用路徑
-                            // 這裡做一個判斷：如果是預覽環境（有 __firebase_config），用 artifacts 路徑
-                            // 如果是手動設定（沒有 __firebase_config），用普通路徑
                             let docRef;
                             if (typeof __firebase_config !== 'undefined') {
                                 docRef = doc(db, 'artifacts', appId, 'public', 'data', 'trips', newTripId);
@@ -632,8 +650,8 @@
 
                             connectToTrip(newTripId);
                         } catch (e) {
-                            console.error("建立行程失敗:", e);
-                            alert("建立行程失敗，請確認 Firebase Config 是否正確");
+                            console.error("建立行程失敗，進入離線模式", e);
+                            isLoading.value = false;
                         }
                     }
                 };
@@ -670,7 +688,7 @@
                             if (days.value.length === 0) { initDefaultData(); fetchWeather(); }
                         }
                     }, (error) => {
-                        console.error("讀取資料失敗:", error);
+                        console.error("讀取資料失敗，切換離線顯示:", error);
                         isLoading.value = false;
                         if (days.value.length === 0) { initDefaultData(); fetchWeather(); }
                     });
