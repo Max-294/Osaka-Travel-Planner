@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>釜山行 2026 | Travel Planner</title>
+    <title>大阪五日 2026｜Travel Planner</title>
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Tailwind CSS -->
@@ -49,6 +49,7 @@
     </script>
 
     <style>
+        html, body { min-height: 100%; }
         body { background-color: #F2EBE5; color: #5C544E; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
@@ -58,11 +59,16 @@
         .list-leave-active { position: absolute; }
         .leaflet-popup-content-wrapper { border-radius: 12px; font-family: 'Zen Maru Gothic'; color: #5C544E; }
         .custom-checkbox:checked { background-color: #A4907C; border-color: #A4907C; }
+        @media (min-width: 768px) {
+            .itinerary-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; border-left: 0 !important; margin-left: 0 !important; padding-left: 0 !important; }
+            .itinerary-list > div { margin-top: 0 !important; }
+            .timeline-dot { display: none; }
+        }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
+<body class="min-h-screen flex flex-col overflow-hidden">
 
-    <div id="app" class="flex flex-col h-full max-w-md mx-auto w-full bg-milk-100 shadow-2xl relative sm:rounded-3xl sm:my-4 sm:h-[95vh] sm:border-8 sm:border-white/40 ring-1 ring-black/5">
+    <div id="app" class="flex flex-col h-screen max-w-[1440px] mx-auto w-full bg-milk-100 shadow-2xl relative md:my-3 md:h-[calc(100vh-1.5rem)] md:rounded-3xl md:border-8 md:border-white/40 ring-1 ring-black/5 overflow-hidden">
 
         <!-- Loading Overlay -->
         <div v-if="isLoading" class="absolute inset-0 z-50 bg-milk-100/90 flex flex-col items-center justify-center backdrop-blur-sm">
@@ -73,17 +79,18 @@
 
         <!-- Header -->
         <header class="bg-milk-600 text-white shrink-0 z-20 shadow-sm rounded-b-[2rem]">
-            <div class="p-5 pb-2 flex justify-between items-center">
+            <div class="px-4 pt-4 pb-2 md:px-7 md:pt-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div class="overflow-hidden">
-                    <h1 class="text-xl font-bold tracking-wider flex items-center gap-2 truncate text-[#FDFBF7]">
-                        {{ setup.destination }} <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full text-white/90 flex items-center gap-1 backdrop-blur-md" v-if="user"><div class="w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse"></div>線上</span>
+                    <h1 class="text-base sm:text-xl md:text-2xl font-bold tracking-wide sm:tracking-wider flex items-center gap-2 text-[#FDFBF7]">
+                        {{ setup.destination }} <span class="text-[10px] bg-white/20 p-1.5 sm:px-2 sm:py-0.5 rounded-full text-white/90 flex items-center gap-1 backdrop-blur-md shrink-0" v-if="user"><div class="w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse"></div><span class="hidden sm:inline">線上</span></span>
                     </h1>
                     <div class="flex items-center gap-2 text-xs text-milk-200 mt-1 font-medium opacity-80">
+                         <span>9/23–9/27・TPE ⇄ KIX</span>
                          <span v-if="tripId" class="font-mono tracking-widest">ID: {{ tripId.substring(0,8) }}</span>
                          <span v-else>離線模式</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0 w-full sm:w-auto">
                     <button @click="showTodoModal = true" class="bg-white/10 text-white hover:bg-white/20 p-2.5 rounded-2xl transition border border-white/10 relative" title="待辦清單">
                         <i class="ph-bold ph-check-square text-lg"></i>
                         <div v-if="incompleteTodosCount > 0" class="absolute -top-1 -right-1 w-4 h-4 bg-jp-red rounded-full flex items-center justify-center text-[9px] font-bold border border-milk-600">{{ incompleteTodosCount }}</div>
@@ -98,7 +105,7 @@
                     </div>
                 </div>
             </div>
-            <div class="flex overflow-x-auto hide-scroll px-4 pb-4 space-x-3 snap-x">
+            <div class="flex overflow-x-auto hide-scroll px-4 md:px-7 pb-4 space-x-3 snap-x">
                 <div v-for="(day, index) in days" :key="index" @click="currentDayIdx = index" 
                      class="snap-center shrink-0 flex flex-col items-center justify-center w-14 h-16 rounded-2xl cursor-pointer transition-all border-2" 
                      :class="currentDayIdx === index ? 'bg-milk-100 text-milk-700 border-white shadow-md scale-105 -translate-y-1' : 'bg-white/10 text-white/70 border-transparent hover:bg-white/20'">
@@ -114,7 +121,7 @@
             
             <!-- Plan Mode -->
             <transition name="fade">
-                <div v-if="viewMode === 'plan'" class="p-5 pb-24">
+                <div v-if="viewMode === 'plan'" class="p-4 md:p-7 pb-24 max-w-[1380px] mx-auto">
                     <div class="bg-milk-100 p-5 rounded-[1.5rem] shadow-sm mb-5 border border-white flex flex-col gap-3 relative overflow-hidden group">
                         <div class="absolute top-0 left-0 w-1.5 h-full bg-milk-500"></div>
                         <div class="flex justify-between items-start">
@@ -153,7 +160,7 @@
                                 <div class="w-12 h-0.5 bg-white/30 rounded-full"></div>
                             </div>
                             <div class="flex flex-col items-center">
-                                <input v-model="currentDay.flight.end" @change="saveData" class="bg-transparent text-3xl font-bold text-center w-20 focus:outline-none font-mono" placeholder="PUS">
+                                <input v-model="currentDay.flight.end" @change="saveData" class="bg-transparent text-3xl font-bold text-center w-20 focus:outline-none font-mono" placeholder="KIX">
                                 <span class="block text-xs text-white/80 mt-1">抵達</span>
                             </div>
                         </div>
@@ -162,10 +169,10 @@
                         <i class="ph-duotone ph-airplane-tilt group-hover:scale-110 transition-transform"></i> 新增航班資訊
                     </button>
 
-                    <div class="pl-6 border-l-2 border-milk-300/50 ml-3 space-y-6">
-                        <transition-group name="list" tag="div" class="space-y-4">
+                    <div class="pl-6 border-l-2 border-milk-300/50 ml-3 itinerary-list">
+                        <transition-group name="list" tag="div" class="contents">
                             <div v-for="(item, idx) in currentDay.items" :key="item.id || idx" class="relative group">
-                                <div class="absolute -left-[31px] top-6 w-3 h-3 rounded-full border-2 border-milk-200 ring-2 ring-white z-10 transition-colors duration-300" :class="getTypeDotColor(item.type)"></div>
+                                <div class="timeline-dot absolute -left-[31px] top-6 w-3 h-3 rounded-full border-2 border-milk-200 ring-2 ring-white z-10 transition-colors duration-300" :class="getTypeDotColor(item.type)"></div>
                                 <div class="bg-milk-100 p-4 rounded-[1.2rem] shadow-sm border border-transparent hover:border-milk-300/50 hover:shadow-md transition-all flex gap-4 items-start">
                                     <div class="flex flex-col items-center gap-2 w-16 shrink-0 pt-1">
                                         <input v-model="item.time" @change="sortAndSave" type="time" class="text-lg font-bold text-milk-800 bg-milk-200/50 rounded-lg px-1 w-full text-center border border-transparent focus:bg-white focus:border-milk-300 outline-none cursor-pointer font-mono transition-colors">
@@ -178,14 +185,14 @@
                                         </select>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <input v-model="item.activity" @change="saveData" class="w-full text-base font-bold text-milk-800 bg-transparent border-none p-0 focus:ring-0 placeholder-milk-300" placeholder="行程名稱...">
+                                        <input v-model="item.activity" @change="saveData" :title="item.activity" class="w-full text-base font-bold text-milk-800 bg-transparent border-none p-0 focus:ring-0 placeholder-milk-300" placeholder="行程名稱...">
                                         <div class="flex items-center gap-1.5 mt-1.5 text-xs text-milk-500">
                                             <i class="ph-duotone ph-map-pin text-milk-600"></i>
                                             <input v-model="item.location" @change="saveData" class="flex-1 bg-transparent border-none p-0 focus:ring-0 truncate text-milk-500 placeholder-milk-300" placeholder="地點/地址">
                                             <a v-if="item.location" :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.location)" target="_blank" class="text-milk-400 hover:text-milk-600 p-1 hover:bg-milk-200 rounded transition"><i class="ph-bold ph-arrow-square-out"></i></a>
                                         </div>
                                         <div class="mt-2.5">
-                                            <textarea v-model="item.note" @change="saveData" rows="1" class="w-full text-xs text-milk-600 bg-milk-200/50 rounded-lg p-2.5 border-none resize-none focus:bg-white focus:ring-1 focus:ring-milk-300 placeholder-milk-300 transition-colors" placeholder="備註 (例如: 必吃菜單、門票價格)"></textarea>
+                                            <textarea v-model="item.note" @change="saveData" rows="2" class="w-full text-xs text-milk-600 bg-milk-200/50 rounded-lg p-2.5 border-none resize-none focus:bg-white focus:ring-1 focus:ring-milk-300 placeholder-milk-300 transition-colors" placeholder="備註 (例如: 必吃菜單、門票價格)"></textarea>
                                         </div>
                                     </div>
                                     <button @click="removeItem(idx)" class="text-milk-300 hover:text-jp-red/80 p-1.5 hover:bg-jp-red/10 rounded-lg transition self-start"><i class="ph-bold ph-trash"></i></button>
@@ -319,7 +326,7 @@
         <!-- Todo Modal -->
         <transition name="fade">
             <div v-if="showTodoModal" class="absolute inset-0 z-50 bg-milk-800/80 backdrop-blur-sm flex items-center justify-center p-4">
-                <div class="bg-milk-100 w-full max-w-sm rounded-[1.5rem] shadow-2xl flex flex-col max-h-[80vh] overflow-hidden border-4 border-white/50 animate-fade-in">
+                <div class="bg-milk-100 w-full max-w-sm md:max-w-2xl rounded-[1.5rem] shadow-2xl flex flex-col max-h-[85vh] overflow-hidden border-4 border-white/50 animate-fade-in">
                     <div class="p-5 bg-white border-b border-milk-200 flex justify-between items-center shrink-0">
                         <h3 class="text-lg font-bold text-milk-800 flex items-center gap-2">
                             <i class="ph-duotone ph-check-square text-milk-600 text-2xl"></i> 待辦清單 Checklist
@@ -331,7 +338,7 @@
                             <input v-model="newTodo" @keyup.enter="addTodo" class="flex-1 bg-white border-2 border-milk-200 focus:border-milk-400 rounded-xl px-4 py-2.5 text-sm outline-none transition text-milk-800 placeholder-milk-400" placeholder="輸入事項 (如: 買網卡)">
                             <button @click="addTodo" class="bg-milk-600 text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-md hover:bg-milk-700 transition active:scale-95 shrink-0"><i class="ph-bold ph-plus"></i></button>
                         </div>
-                        <div class="space-y-2">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
                             <div v-for="(todo, idx) in todos" :key="idx" class="group flex items-center gap-3 bg-white p-3 rounded-xl border border-milk-200 shadow-sm hover:shadow-md transition">
                                 <input type="checkbox" v-model="todo.done" @change="saveData" class="w-5 h-5 rounded-md text-milk-600 focus:ring-milk-400 border-milk-300 cursor-pointer accent-milk-600">
                                 <span :class="{'line-through text-milk-300': todo.done, 'text-milk-800 font-bold': !todo.done}" class="flex-1 text-sm transition-colors">{{ todo.text }}</span>
@@ -403,7 +410,7 @@
                 const tripId = ref('');
                 
                 // Data
-                const setup = ref({ destination: 'Busan 釜山', currency: 'KRW', rate: 0.024 });
+                const setup = ref({ destination: '大阪五日親子旅行', currency: 'JPY', rate: 0.21 });
                 const days = ref([]);
                 const expenses = ref([]);
                 const participants = ref(['爸爸', '媽媽']);
@@ -445,11 +452,22 @@
                         '2026-09-27'
                     ].map(d => getSpecificDate(d));
 
+                    setup.value = { destination: '大阪五日親子旅行', currency: 'JPY', rate: 0.21 };
                     todos.value = [
-                        { text: '確認護照效期 (6個月以上)', done: false },
-                        { text: '購買網卡/漫遊', done: false },
-                        { text: '換韓幣', done: false },
-                        { text: '填寫入境檢疫 Q-CODE', done: false }
+                        { text: '【證件】確認全員護照效期、姓名與華航機票一致', done: false },
+                        { text: '【住宿】確認園前景飯店 9/23 與 OMO7 9/24–9/27 訂房', done: false },
+                        { text: '【接送】預訂 9/23 INNN：KIX → 園前景飯店', done: false },
+                        { text: '【USJ】購買 9/23–9/24 的 1.5 日券', done: false },
+                        { text: '【USJ】預訂 9/24 VIP 5 小時導覽並確認用餐時段', done: false },
+                        { text: '【交通】預約 9/24 18:50 OMO7 免費接駁車', done: false },
+                        { text: '【票券】購買 9/25–9/26 大阪周遊卡 2 日券', done: false },
+                        { text: '【餐廳】預約 9/25 18:30 蟹道樂道頓堀本店', done: false },
+                        { text: '【通天閣】確認 9/26 Dive & Walk／Tower Slider 營業與限制', done: false },
+                        { text: '【票券】購買 9/26 16:30 HARUKAS 300 日時指定票', done: false },
+                        { text: '【餐廳】預約 9/26 19:00 釣船茶屋難波本店', done: false },
+                        { text: '【上網】購買日本 SIM／eSIM，並備妥 ICOCA', done: false },
+                        { text: '【出發前】截圖保存所有 QR Code、訂單編號與取消規則', done: false },
+                        { text: '【行李】準備兒童備品、雨具、暈車藥與輕便鞋', done: false }
                     ];
 
                     days.value = [
@@ -457,66 +475,92 @@
                             date: 'Day 1',
                             fullDate: dates[0].full,
                             shortDate: dates[0].short,
-                            title: '抵達與西面美食',
-                            flight: { start: 'TPE', end: 'PUS', time: '14:00' },
+                            title: '抵達大阪・USJ 萬聖節之夜',
+                            flight: { start: 'TPE', end: 'KIX', time: '09:00' },
                             items: [
-                                { id: 1, time: '13:00', type: 'transport', activity: '前往桃園機場', location: '家 -> 桃機', note: '' },
-                                { id: 2, time: '16:30', type: 'transport', activity: '機場巴士/地鐵', location: '金海機場 -> 西面', note: '搭乘輕軌轉地鐵2號線' },
-                                { id: 3, time: '18:00', type: 'hotel', activity: 'Check-in', location: '釜山樂天飯店 (Lotte Hotel Busan)', note: '寄放行李' },
-                                { id: 4, time: '19:00', type: 'shop', activity: '逛街', location: '樂天百貨 / 西面地下街', note: '' },
-                                { id: 5, time: '20:30', type: 'food', activity: '晚餐', location: '橋村炸雞 (西面店)', note: '必點蜂蜜口味' },
-                                { id: 6, time: '22:00', type: 'hotel', activity: '休息', location: '樂天飯店', note: '' }
+                                { id: 1, time: '06:30', type: 'transport', activity: '新竹前往桃園機場', location: '新竹 → 桃園國際機場第二航廈', note: '接送約 45–60 分；計程車約 NT$1,200–1,600' },
+                                { id: 2, time: '09:00', type: 'transport', activity: '華航飛往大阪', location: 'TPE → KIX', note: '飛行約 2 小時 50 分' },
+                                { id: 3, time: '12:50', type: 'transport', activity: '抵達 KIX・入境領行李', location: '關西國際機場', note: '接機時間建議抓落地後 75–90 分鐘' },
+                                { id: 4, time: '14:20', type: 'transport', activity: 'INNN 機場接送', location: 'KIX → The Park Front Hotel at Universal Studios Japan', note: '約 50–70 分；計程車備案約 ¥18,000–23,000，不建議' },
+                                { id: 5, time: '15:15', type: 'hotel', activity: '園前景飯店寄放行李', location: 'The Park Front Hotel at Universal Studios Japan', note: '飯店步行至 USJ 約 2–5 分' },
+                                { id: 6, time: '15:30', type: 'spot', activity: '使用 USJ 1.5 日券入園', location: 'Universal Studios Japan', note: '第一天 15:00 起可入園' },
+                                { id: 7, time: '18:00', type: 'spot', activity: '萬聖節街頭殭屍・Zombie de Dance', location: 'Universal Studios Japan', note: '5 歲以下不建議參加 Horror Nights' },
+                                { id: 8, time: '21:30', type: 'hotel', activity: '閉園後返回飯店', location: 'The Park Front Hotel at Universal Studios Japan', note: '依當日閉園時間彈性調整' }
                             ]
                         },
                         {
                             date: 'Day 2',
                             fullDate: dates[1].full,
                             shortDate: dates[1].short,
-                            title: '南浦洞與甘川洞文化村',
+                            title: 'USJ VIP 導覽・入住 OMO7',
                             flight: null,
                             items: [
-                                { id: 7, time: '09:00', type: 'food', activity: '早餐', location: 'EGG DROP', note: '人氣吐司' },
-                                { id: 8, time: '10:00', type: 'transport', activity: '移動', location: '西面 -> 南浦洞', note: '地鐵1號線' },
-                                { id: 9, time: '10:30', type: 'spot', activity: '海上纜車', location: '松島海水浴場', note: 'VBP-B 免費搭乘' },
-                                { id: 10, time: '12:00', type: 'spot', activity: '天空步道', location: '松島龍宮空中步道', note: '' },
-                                { id: 11, time: '14:00', type: 'spot', activity: '拍照', location: '甘川洞文化村', note: '尋找小王子' },
-                                { id: 12, time: '16:30', type: 'shop', activity: '逛街', location: '南浦洞商圈', note: 'BIFF廣場' },
-                                { id: 13, time: '18:00', type: 'spot', activity: '夜景', location: '釜山塔', note: 'VBP-B 免費入場' },
-                                { id: 14, time: '19:30', type: 'food', activity: '晚餐', location: '味贊王鹽烤肉 (富平店)', note: '專人代烤' },
-                                { id: 15, time: '21:00', type: 'shop', activity: '採買', location: '樂天超市', note: '買伴手禮' },
-                                { id: 16, time: '23:00', type: 'food', activity: '宵夜', location: 'Outdark 炸雞', note: '如果還吃得下的話' }
+                                { id: 20, time: '07:30', type: 'food', activity: '園前景飯店早餐', location: 'The Park Front Hotel at Universal Studios Japan', note: '早餐後退房並寄放行李' },
+                                { id: 21, time: '09:30', type: 'spot', activity: '輕鬆入園・自行遊園', location: 'Universal Studios Japan', note: '不必趕開園；先玩設施與拍照' },
+                                { id: 22, time: '11:30', type: 'food', activity: '園區午餐', location: 'Universal Studios Japan', note: '若 VIP 方案含午餐則取消此段' },
+                                { id: 23, time: '12:30', type: 'spot', activity: 'VIP 5 小時導覽', location: 'Universal Studios Japan VIP Reception', note: '預估 12:30–17:30；實際依票券指定時間' },
+                                { id: 24, time: '17:45', type: 'hotel', activity: '返回園前景飯店領行李', location: 'The Park Front Hotel at Universal Studios Japan', note: 'USJ 步行約 2–5 分' },
+                                { id: 25, time: '18:50', type: 'transport', activity: 'OMO7 免費接駁車', location: 'Hotel Kintetsu Universal City → OMO7 Osaka', note: '需預約；若錯過，計程車約 20–30 分／¥4,100–5,500，預算抓 ¥6,000' },
+                                { id: 26, time: '19:20', type: 'hotel', activity: '入住 OMO7・晚餐休息', location: 'OMO7 Osaka by Hoshino Resorts', note: '後三晚住宿' }
                             ]
                         },
                         {
                             date: 'Day 3',
                             fullDate: dates[2].full,
                             shortDate: dates[2].short,
-                            title: '自由探索 (機張/海雲台)',
+                            title: '大阪城・心齋橋・難波・道頓堀',
                             flight: null,
                             items: [
-                                { id: 20, time: '09:00', type: 'transport', activity: '自由活動', location: '釜山市區', note: '可安排海東龍宮寺或膠囊列車' }
+                                { id: 30, time: '07:30', type: 'food', activity: 'OMO7 早餐', location: 'OMO7 Osaka by Hoshino Resorts', note: '大阪周遊卡 2 日券第 1 天' },
+                                { id: 31, time: '08:20', type: 'transport', activity: '前往大阪城', location: 'OMO7 Osaka → Osaka Castle', note: '地鐵轉乘；計程車約 20–25 分／¥2,500–3,500' },
+                                { id: 32, time: '09:30', type: 'spot', activity: '先換大阪城御座船班次', location: '大阪城御座船售票處', note: '周遊卡持有人仍須換當日班次' },
+                                { id: 33, time: '10:00', type: 'spot', activity: '大阪城御座船', location: '大阪城御座船', note: '若班次較晚，先參觀天守閣再返回搭船' },
+                                { id: 34, time: '10:40', type: 'spot', activity: '大阪城天守閣・豐臣石垣館', location: '大阪城', note: '園區步行量較大' },
+                                { id: 35, time: '12:40', type: 'food', activity: '大阪城周邊午餐', location: 'JO-TERRACE OSAKA', note: '保留約 50 分鐘' },
+                                { id: 36, time: '13:30', type: 'spot', activity: '大阪城文化財櫓', location: '大阪城', note: '依開放狀況調整' },
+                                { id: 37, time: '15:10', type: 'shop', activity: '心齋橋散步購物', location: '心齋橋筋商店街', note: '大阪城→心齋橋計程車約 15–20 分／¥1,800–2,500' },
+                                { id: 38, time: '16:40', type: 'spot', activity: '難波八阪神社', location: '難波八阪神社', note: '心齋橋步行 25–35 分；計程車約 ¥900–1,300' },
+                                { id: 39, time: '17:15', type: 'spot', activity: '道頓堀・固力果看板', location: '道頓堀', note: '難波八阪神社步行 15–20 分' },
+                                { id: 40, time: '18:30', type: 'food', activity: '蟹道樂晚餐', location: '蟹道樂 道頓堀本店', note: '務必事先預約' },
+                                { id: 41, time: '20:30', type: 'transport', activity: '返回 OMO7', location: '道頓堀 → OMO7 Osaka', note: '地鐵；計程車約 10–15 分／¥1,200–1,800' }
                             ]
                         },
                         {
                             date: 'Day 4',
                             fullDate: dates[3].full,
                             shortDate: dates[3].short,
-                            title: '放鬆與最後採購',
+                            title: '通天閣・Kids Plaza・阿倍野夕景',
                             flight: null,
                             items: [
-                                { id: 21, time: '10:00', type: 'shop', activity: '伴手禮採買', location: '樂天超市 / 傳統市場', note: '補齊未買清單' }
+                                { id: 50, time: '07:15', type: 'food', activity: 'OMO7 早餐', location: 'OMO7 Osaka by Hoshino Resorts', note: '大阪周遊卡 2 日券第 2 天' },
+                                { id: 51, time: '08:45', type: 'spot', activity: '通天閣現場換取體驗時段', location: '通天閣 SATELLITE', note: '持周遊卡者需當日現場預約入場時段' },
+                                { id: 52, time: '09:10', type: 'spot', activity: 'Dive & Walk', location: '通天閣', note: '9–65 歲、身高 130 cm 以上；穿褲裝與包覆鞋' },
+                                { id: 53, time: '10:15', type: 'spot', activity: 'Tower Slider', location: '通天閣', note: '7–65 歲、身高 120 cm 以上' },
+                                { id: 54, time: '10:45', type: 'spot', activity: '通天閣展望台', location: '通天閣', note: '結束後前往 Kids Plaza；計程車約 15–25 分／¥2,200–3,000' },
+                                { id: 55, time: '12:30', type: 'spot', activity: 'Kids Plaza Osaka', location: '大阪兒童樂園 Kids Plaza Osaka', note: '預留約 3 小時；延誤時搭計程車前往 HARUKAS' },
+                                { id: 56, time: '16:30', type: 'spot', activity: 'HARUKAS 300 夕陽夜景', location: 'HARUKAS 300', note: '建議日時指定票；Kids Plaza 計程車約 20–30 分／¥3,000–4,000' },
+                                { id: 57, time: '19:00', type: 'food', activity: '釣船茶屋難波本店', location: '釣船茶屋 ざうお 難波本店', note: '務必事先預約；HARUKAS 計程車約 10–15 分／¥1,300–1,900' },
+                                { id: 58, time: '21:00', type: 'transport', activity: '返回 OMO7', location: '釣船茶屋難波本店 → OMO7 Osaka', note: '計程車約 10 分／¥1,000–1,500' }
                             ]
                         },
                         {
                             date: 'Day 5',
                             fullDate: dates[4].full,
                             shortDate: dates[4].short,
-                            title: '返家',
-                            flight: { start: 'PUS', end: 'TPE', time: '11:00' },
+                            title: '住吉大社・臨空城・返家',
+                            flight: { start: 'KIX', end: 'TPE', time: '19:05' },
                             items: [
-                                { id: 17, time: '08:00', type: 'transport', activity: '前往機場', location: '西面 -> 金海機場', note: '預留2小時Check-in' },
-                                { id: 18, time: '11:00', type: 'transport', activity: '飛機', location: 'PUS -> TPE', note: '' },
-                                { id: 19, time: '13:00', type: 'transport', activity: '回家', location: '桃機 -> 溫暖的家', note: '' }
+                                { id: 60, time: '07:00', type: 'food', activity: 'OMO7 早餐', location: 'OMO7 Osaka by Hoshino Resorts', note: '08:00 退房並寄放行李' },
+                                { id: 61, time: '08:10', type: 'transport', activity: '前往住吉大社', location: 'OMO7 Osaka → 住吉大社', note: '南海本線普通車；計程車約 15–20 分／¥2,000–2,800' },
+                                { id: 62, time: '08:40', type: 'spot', activity: '住吉大社・五大力石', location: '住吉大社 五大力石守', note: '御守袋約 09:00 起提供' },
+                                { id: 63, time: '10:10', type: 'hotel', activity: '返回 OMO7 領行李', location: 'OMO7 Osaka by Hoshino Resorts', note: '大型行李先寄放飯店' },
+                                { id: 64, time: '10:35', type: 'transport', activity: '前往臨空城', location: '新今宮駅 → りんくうタウン駅', note: '南海機場急行／Rapi:t 約 35–45 分；全程計程車不建議' },
+                                { id: 65, time: '11:35', type: 'spot', activity: '臨空之星摩天輪', location: 'りんくうプレジャータウン シークル', note: '現場購票即可' },
+                                { id: 66, time: '12:10', type: 'food', activity: '臨空城午餐', location: 'Rinku Pleasure Town Seacle', note: '依孩子狀況彈性調整' },
+                                { id: 67, time: '13:00', type: 'shop', activity: 'Rinku Premium Outlets', location: 'Rinku Premium Outlets', note: '購物約 80 分鐘' },
+                                { id: 68, time: '14:20', type: 'spot', activity: '臨空公園・大理石海灘', location: 'Rinku Park Marble Beach', note: '雨天改臨空之湯；返回車站計程車約 ¥800–1,200' },
+                                { id: 69, time: '15:30', type: 'transport', activity: '前往 KIX', location: 'りんくうタウン駅 → 関西空港駅', note: '南海／JR 約 6 分為首選；目標 16:10 抵達' },
+                                { id: 70, time: '19:05', type: 'transport', activity: '華航 CI173 起飛', location: 'KIX → TPE', note: '提前完成報到與安檢' }
                             ]
                         }
                     ];
@@ -613,14 +657,14 @@
                     let urlTripId = urlParams.get('tripId');
                     
                     if (!urlTripId) {
-                        urlTripId = localStorage.getItem('last_trip_id');
+                        urlTripId = localStorage.getItem('osaka_trip_id');
                     }
 
                     if (urlTripId) {
                         tripId.value = urlTripId;
                         connectToTrip(urlTripId);
                     } else {
-                        const newTripId = 'busan_' + Math.random().toString(36).substr(2, 6);
+                        const newTripId = 'osaka_2026_' + Math.random().toString(36).substr(2, 6);
                         tripId.value = newTripId;
                         initDefaultData();
                         fetchWeather(); 
@@ -646,7 +690,7 @@
                                 const newUrl = window.location.pathname + `?tripId=${newTripId}`;
                                 window.history.pushState({}, '', newUrl);
                             } catch (e) {}
-                            localStorage.setItem('last_trip_id', newTripId);
+                            localStorage.setItem('osaka_trip_id', newTripId);
 
                             connectToTrip(newTripId);
                         } catch (e) {
@@ -658,7 +702,7 @@
 
                 const connectToTrip = (tid) => {
                     isLoading.value = true;
-                    localStorage.setItem('last_trip_id', tid);
+                    localStorage.setItem('osaka_trip_id', tid);
 
                     let docRef;
                     if (typeof __firebase_config !== 'undefined') {
@@ -803,7 +847,7 @@
                     await nextTick();
                     if (!document.getElementById('map')) return;
                     if (map) { map.remove(); map = null; }
-                    map = L.map('map').setView([35.1796, 129.0756], 13);
+                    map = L.map('map').setView([34.6937, 135.5023], 12);
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
                     const items = currentDay.value.items.filter(i => i.location);
                     if(items.length === 0) return;
