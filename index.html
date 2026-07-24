@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>大阪五日 2026｜Travel Planner</title>
     <!-- Vue 3 -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -59,6 +59,26 @@
         .list-leave-active { position: absolute; }
         .leaflet-popup-content-wrapper { border-radius: 12px; font-family: 'Zen Maru Gothic'; color: #5C544E; }
         .custom-checkbox:checked { background-color: #A4907C; border-color: #A4907C; }
+        .time-field {
+            min-width: 7rem;
+            min-height: 2.75rem;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.25;
+            white-space: nowrap;
+        }
+        .time-field::-webkit-date-and-time-value {
+            min-height: 1.5rem;
+            text-align: center;
+        }
+        .time-field::-webkit-datetime-edit {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        @media (pointer: coarse) {
+            button, a, select, input[type="time"] { min-height: 44px; }
+        }
         @media (min-width: 768px) {
             .itinerary-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; border-left: 0 !important; margin-left: 0 !important; padding-left: 0 !important; }
             .itinerary-list > div { margin-top: 0 !important; }
@@ -78,7 +98,7 @@
         </div>
 
         <!-- Header -->
-        <header class="bg-milk-600 text-white shrink-0 z-20 shadow-sm rounded-b-[2rem]">
+        <header class="bg-milk-600 text-white shrink-0 z-20 shadow-sm rounded-b-[2rem] pt-[env(safe-area-inset-top)]">
             <div class="px-4 pt-4 pb-2 md:px-7 md:pt-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div class="overflow-hidden">
                     <h1 class="text-base sm:text-xl md:text-2xl font-bold tracking-wide sm:tracking-wider flex items-center gap-2 text-[#FDFBF7]">
@@ -153,7 +173,7 @@
                         <div class="flex justify-between items-center text-center relative z-10">
                             <div class="flex flex-col items-center">
                                 <input v-model="currentDay.flight.start" @change="saveData" class="bg-transparent text-3xl font-bold text-center w-20 focus:outline-none font-mono" placeholder="TPE">
-                                <input v-model="currentDay.flight.time" @change="saveData" type="time" class="block bg-transparent text-white/80 text-xs text-center w-full mt-1">
+                                <input v-model="currentDay.flight.time" @change="saveData" type="time" aria-label="航班起飛時間" class="time-field block bg-white/10 text-white text-sm font-bold text-center rounded-xl px-2 mt-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
                             </div>
                             <div class="flex flex-col items-center gap-1 opacity-80">
                                 <i class="ph-fill ph-airplane-tilt text-2xl"></i>
@@ -173,10 +193,10 @@
                         <transition-group name="list" tag="div" class="contents">
                             <div v-for="(item, idx) in currentDay.items" :key="item.id || idx" class="relative group">
                                 <div class="timeline-dot absolute -left-[31px] top-6 w-3 h-3 rounded-full border-2 border-milk-200 ring-2 ring-white z-10 transition-colors duration-300" :class="getTypeDotColor(item.type)"></div>
-                                <div class="bg-milk-100 p-4 rounded-[1.2rem] shadow-sm border border-transparent hover:border-milk-300/50 hover:shadow-md transition-all flex gap-4 items-start">
-                                    <div class="flex flex-col items-center gap-2 w-16 shrink-0 pt-1">
-                                        <input v-model="item.time" @change="sortAndSave" type="time" class="text-lg font-bold text-milk-800 bg-milk-200/50 rounded-lg px-1 w-full text-center border border-transparent focus:bg-white focus:border-milk-300 outline-none cursor-pointer font-mono transition-colors">
-                                        <select v-model="item.type" @change="saveData" class="text-[10px] w-full text-center bg-transparent border-none text-milk-500 font-bold focus:ring-0 cursor-pointer hover:text-milk-700">
+                                <div class="relative bg-milk-100 p-4 pr-14 rounded-[1.2rem] shadow-sm border border-transparent hover:border-milk-300/50 hover:shadow-md transition-all flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-start">
+                                    <div class="flex flex-row sm:flex-col items-center gap-2 w-full sm:w-28 shrink-0">
+                                        <input v-model="item.time" @change="sortAndSave" type="time" :aria-label="item.activity + '時間'" class="time-field text-base font-bold text-milk-800 bg-milk-200/60 rounded-xl px-2 text-center border border-milk-300/60 focus:bg-white focus:border-milk-500 focus:ring-2 focus:ring-milk-300/50 outline-none cursor-pointer font-mono transition-colors">
+                                        <select v-model="item.type" @change="saveData" aria-label="行程類型" class="h-11 sm:h-9 text-xs sm:text-[11px] flex-1 sm:w-full text-center bg-milk-200/40 rounded-xl border border-milk-300/50 px-2 text-milk-600 font-bold focus:ring-2 focus:ring-milk-300 cursor-pointer hover:text-milk-800">
                                             <option value="spot">📍 景點</option>
                                             <option value="food">🍴 美食</option>
                                             <option value="shop">🛍️ 購物</option>
@@ -189,13 +209,13 @@
                                         <div class="flex items-center gap-1.5 mt-1.5 text-xs text-milk-500">
                                             <i class="ph-duotone ph-map-pin text-milk-600"></i>
                                             <input v-model="item.location" @change="saveData" class="flex-1 bg-transparent border-none p-0 focus:ring-0 truncate text-milk-500 placeholder-milk-300" placeholder="地點/地址">
-                                            <a v-if="item.location" :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.location)" target="_blank" class="text-milk-400 hover:text-milk-600 p-1 hover:bg-milk-200 rounded transition"><i class="ph-bold ph-arrow-square-out"></i></a>
+                                            <a v-if="item.location" :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.location)" target="_blank" aria-label="在 Google Maps 開啟" class="w-11 h-11 -my-3 flex items-center justify-center text-milk-400 hover:text-milk-600 hover:bg-milk-200 rounded-xl transition"><i class="ph-bold ph-arrow-square-out"></i></a>
                                         </div>
                                         <div class="mt-2.5">
                                             <textarea v-model="item.note" @change="saveData" rows="2" class="w-full text-xs text-milk-600 bg-milk-200/50 rounded-lg p-2.5 border-none resize-none focus:bg-white focus:ring-1 focus:ring-milk-300 placeholder-milk-300 transition-colors" placeholder="備註 (例如: 必吃菜單、門票價格)"></textarea>
                                         </div>
                                     </div>
-                                    <button @click="removeItem(idx)" class="text-milk-300 hover:text-jp-red/80 p-1.5 hover:bg-jp-red/10 rounded-lg transition self-start"><i class="ph-bold ph-trash"></i></button>
+                                    <button @click="removeItem(idx)" aria-label="刪除行程" class="absolute right-2 bottom-2 w-11 h-11 flex items-center justify-center text-milk-300 hover:text-jp-red/80 hover:bg-jp-red/10 rounded-xl transition"><i class="ph-bold ph-trash"></i></button>
                                 </div>
                             </div>
                         </transition-group>
