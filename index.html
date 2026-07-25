@@ -428,6 +428,7 @@
                 const viewMode = ref('plan');
                 const currentDayIdx = ref(0);
                 const tripId = ref('');
+                const itineraryVersion = '2026-07-25-bungo';
                 
                 // Data
                 const setup = ref({ destination: '大阪五日親子旅行', currency: 'JPY', rate: 0.21 });
@@ -716,6 +717,7 @@
                                 setup: setup.value,
                                 participants: participants.value,
                                 todos: todos.value,
+                                itineraryVersion,
                                 lastUpdate: new Date()
                             });
                             
@@ -744,10 +746,32 @@
                         docRef = doc(db, 'trips', tid);
                     }
                     
-                    unsubscribe = onSnapshot(docRef, (docSnap) => {
+                    unsubscribe = onSnapshot(docRef, async (docSnap) => {
                         isLoading.value = false;
                         if (docSnap.exists()) {
                             const data = docSnap.data();
+                            if (data.itineraryVersion !== itineraryVersion) {
+                                const savedExpenses = data.expenses || [];
+                                const savedParticipants = data.participants || ['爸爸', '媽媽'];
+                                const savedSetup = data.setup || {};
+
+                                initDefaultData();
+                                expenses.value = savedExpenses;
+                                participants.value = savedParticipants;
+                                setup.value = { ...setup.value, ...savedSetup };
+
+                                try {
+                                    await updateDoc(docRef, {
+                                        days: days.value,
+                                        todos: todos.value,
+                                        itineraryVersion,
+                                        lastUpdate: new Date()
+                                    });
+                                } catch (error) {
+                                    console.error('更新新版行程失敗:', error);
+                                }
+                                return;
+                            }
                             if (JSON.stringify(days.value) !== JSON.stringify(data.days)) { days.value = data.days || []; }
                             if (JSON.stringify(expenses.value) !== JSON.stringify(data.expenses)) { expenses.value = data.expenses || []; }
                             if (data.participants) { participants.value = data.participants; }
@@ -791,6 +815,7 @@
                                 setup: setup.value,
                                 participants: participants.value,
                                 todos: todos.value,
+                                itineraryVersion,
                                 lastUpdate: new Date()
                             });
                         } catch (e) { console.error('儲存失敗', e); }
