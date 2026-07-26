@@ -104,10 +104,14 @@
                     <h1 class="text-base sm:text-xl md:text-2xl font-bold tracking-wide sm:tracking-wider flex items-center gap-2 text-[#FDFBF7]">
                         {{ setup.destination }} <span class="text-[10px] bg-white/20 p-1.5 sm:px-2 sm:py-0.5 rounded-full text-white/90 flex items-center gap-1 backdrop-blur-md shrink-0" v-if="user"><div class="w-1.5 h-1.5 bg-green-300 rounded-full animate-pulse"></div><span class="hidden sm:inline">線上</span></span>
                     </h1>
-                    <div class="flex items-center gap-2 text-xs text-milk-200 mt-1 font-medium opacity-80">
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-milk-200 mt-1 font-medium opacity-80">
                          <span>9/23–9/27・TPE ⇄ KIX</span>
-                         <span v-if="tripId" class="font-mono tracking-widest">ID: {{ tripId.substring(0,8) }}</span>
-                         <span v-else>離線模式</span>
+                         <span v-if="tripId" class="font-mono tracking-wide break-all">ID: {{ tripId }}</span>
+                         <span v-if="!tripId">離線模式</span>
+                         <span v-else-if="syncStatus === 'saving'" class="text-jp-yellow">儲存中…</span>
+                         <span v-else-if="syncStatus === 'saved'" class="text-green-200">已同步</span>
+                         <span v-else-if="syncStatus === 'error'" class="text-red-200">同步失敗</span>
+                         <span v-else>連線中…</span>
                     </div>
                 </div>
                 <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0 w-full sm:w-auto">
@@ -410,6 +414,7 @@
                 let app, auth, db;
                 const isLoading = ref(true);
                 const user = ref(null);
+                const syncStatus = ref('idle');
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                 
                 // 檢查是否設定了 API Key
@@ -686,6 +691,18 @@
                     isLoading.value = false;
                 }
 
+                const syncTripIdToUrl = (tid) => {
+                    if (!tid) return;
+
+                    try {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('tripId', tid);
+                        window.history.replaceState({}, '', url.toString());
+                    } catch (e) {
+                        console.warn('無法更新分享網址', e);
+                    }
+                };
+
                 const handleRoute = async () => {
                     const urlParams = new URLSearchParams(window.location.search);
                     let urlTripId = urlParams.get('tripId');
@@ -696,6 +713,7 @@
 
                     if (urlTripId) {
                         tripId.value = urlTripId;
+                        syncTripIdToUrl(urlTripId);
                         connectToTrip(urlTripId);
                     } else {
                         const newTripId = 'osaka_2026_' + Math.random().toString(36).substr(2, 6);
@@ -721,10 +739,7 @@
                                 lastUpdate: new Date()
                             });
                             
-                            try {
-                                const newUrl = window.location.pathname + `?tripId=${newTripId}`;
-                                window.history.pushState({}, '', newUrl);
-                            } catch (e) {}
+                            syncTripIdToUrl(newTripId);
                             localStorage.setItem('osaka_trip_id', newTripId);
 
                             connectToTrip(newTripId);
@@ -737,6 +752,7 @@
 
                 const connectToTrip = (tid) => {
                     isLoading.value = true;
+                    syncTripIdToUrl(tid);
                     localStorage.setItem('osaka_trip_id', tid);
 
                     let docRef;
@@ -746,8 +762,9 @@
                         docRef = doc(db, 'trips', tid);
                     }
                     
-                    unsubscribe = onSnapshot(docRef, async (docSnap) => {
+                    unsubscribe = onSnapshot(docRef, { includeMetadataChanges: true }, async (docSnap) => {
                         isLoading.value = false;
+                        syncStatus.value = docSnap.metadata.hasPendingWrites ? 'saving' : 'saved';
                         if (docSnap.exists()) {
                             const data = docSnap.data();
                             if (data.itineraryVersion !== itineraryVersion) {
@@ -791,15 +808,20 @@
                     }, (error) => {
                         console.error("讀取資料失敗，切換離線顯示:", error);
                         isLoading.value = false;
+                        syncStatus.value = 'error';
                         if (days.value.length === 0) { initDefaultData(); fetchWeather(); }
                     });
                 };
 
                 let saveTimeout = null;
                 const saveData = () => {
-                    if (!user.value || !tripId.value || !db) return;
+                    if (!user.value || !tripId.value || !db) {
+                        syncStatus.value = 'error';
+                        return;
+                    }
                     
                     if (saveTimeout) clearTimeout(saveTimeout);
+                    syncStatus.value = 'saving';
                     saveTimeout = setTimeout(async () => {
                         try {
                             let docRef;
@@ -818,7 +840,11 @@
                                 itineraryVersion,
                                 lastUpdate: new Date()
                             });
-                        } catch (e) { console.error('儲存失敗', e); }
+                            syncStatus.value = 'saved';
+                        } catch (e) {
+                            syncStatus.value = 'error';
+                            console.error('儲存失敗', e);
+                        }
                     }, 1000);
                 };
 
@@ -896,8 +922,18 @@
                 const removeTodo = (idx) => { todos.value.splice(idx, 1); saveData(); };
 
                 const copyShareLink = () => {
-                    const url = window.location.href;
-                    navigator.clipboard.writeText(url).then(() => alert('已複製連結！傳給朋友即可共同編輯。'));
+                    if (!tripId.value) {
+                        alert('行程尚未連線，請稍後再試。');
+                        return;
+                    }
+
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('tripId', tripId.value);
+                    const shareUrl = url.toString();
+
+                    navigator.clipboard.writeText(shareUrl)
+                        .then(() => alert(`已複製共同帳本連結！\n行程 ID：${tripId.value}`))
+                        .catch(() => window.prompt('請複製以下共同帳本連結：', shareUrl));
                 };
 
                 let map = null;
@@ -930,7 +966,7 @@
 
                 return {
                     viewMode, days, currentDay, currentDayIdx, expenses, newExpense, totalExpense, setup,
-                    isLoading, user, tripId, participants, newParticipantName, showPayerSettings, showRateEdit,
+                    isLoading, user, tripId, syncStatus, participants, newParticipantName, showPayerSettings, showRateEdit,
                     getTypeDotColor, getPayerColor, addItem, removeItem, addDay, addFlight, addExpense, removeExpense,
                     renderMap, copyShareLink, saveData, sortAndSave, addParticipant, removeParticipant, updateDate, getWeather,
                     todos, newTodo, showTodoModal, addTodo, removeTodo, incompleteTodosCount
