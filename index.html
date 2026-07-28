@@ -122,6 +122,7 @@
                         <button @click="viewMode = 'plan'" :class="viewMode === 'plan' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/60 hover:text-white'" class="p-2 rounded-xl transition-all"><i class="ph-fill ph-calendar-check text-lg"></i></button>
                         <button @click="viewMode = 'map'" :class="viewMode === 'map' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/60 hover:text-white'" class="p-2 rounded-xl transition-all"><i class="ph-fill ph-map-trifold text-lg"></i></button>
                         <button @click="viewMode = 'money'" :class="viewMode === 'money' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/60 hover:text-white'" class="p-2 rounded-xl transition-all"><i class="ph-fill ph-currency-dollar text-lg"></i></button>
+                        <button @click="viewMode = 'medical'" :class="viewMode === 'medical' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/60 hover:text-white'" class="p-2 rounded-xl transition-all" title="大阪醫療資訊" aria-label="切換至大阪醫療資訊"><i class="ph-fill ph-heartbeat text-lg"></i></button>
                     </div>
                 </div>
             </div>
@@ -340,6 +341,177 @@
                         <p class="text-sm font-bold tracking-wider">還沒有消費紀錄</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- Medical Mode -->
+            <div v-if="viewMode === 'medical'" class="p-4 md:p-7 pb-24 max-w-[1180px] mx-auto">
+                <section class="rounded-[1.75rem] bg-gradient-to-br from-[#8D7B68] to-[#685A4E] text-white p-5 md:p-7 shadow-lg mb-5 relative overflow-hidden">
+                    <div class="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-white/10 blur-2xl"></div>
+                    <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <div class="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.18em] text-white/70 uppercase mb-2">
+                                <i class="ph-fill ph-heartbeat text-lg text-[#F3C9C9]"></i> Osaka Medical Guide
+                            </div>
+                            <h2 class="text-2xl md:text-3xl font-bold tracking-wide">大阪就醫與緊急聯絡</h2>
+                            <p class="text-sm text-white/75 mt-2 leading-relaxed max-w-2xl">緊急時先撥 <strong class="text-white">119</strong>。一般急病可先利用大阪府與 JNTO 的官方電話確認應前往的醫療院所。</p>
+                        </div>
+                        <a href="tel:119" class="shrink-0 inline-flex items-center justify-center gap-2 rounded-2xl bg-white text-[#765A51] px-6 py-3.5 font-bold shadow-lg hover:bg-[#FFF8F5] transition active:scale-95">
+                            <i class="ph-fill ph-phone-call text-xl"></i> 緊急救護 119
+                        </a>
+                    </div>
+                </section>
+
+                <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 mb-5">
+                    <article class="rounded-2xl bg-[#FFF4F2] border border-[#E7B8B3]/60 p-5 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-[#A85C56] bg-white/80 px-2 py-1 rounded-full mb-2">24 小時・中文通譯</span>
+                                <h3 class="font-bold text-milk-900 text-lg">救護車／消防</h3>
+                            </div>
+                            <i class="ph-duotone ph-first-aid-kit text-3xl text-[#C77770]"></i>
+                        </div>
+                        <a href="tel:119" class="mt-4 flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-[#E7B8B3]/50 font-mono font-bold text-xl text-[#9C504A] hover:shadow-md transition">
+                            119 <i class="ph-bold ph-phone-outgoing"></i>
+                        </a>
+                        <p class="text-xs leading-relaxed text-milk-600 mt-3">大阪市的 119 可透過三方通話提供中文、英文、韓文等多語通譯。</p>
+                    </article>
+
+                    <article class="rounded-2xl bg-[#F1F6FB] border border-[#B8CDE1]/70 p-5 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-[#4F7295] bg-white/80 px-2 py-1 rounded-full mb-2">24 小時・中文</span>
+                                <h3 class="font-bold text-milk-900 text-lg">JNTO 訪日旅客熱線</h3>
+                            </div>
+                            <i class="ph-duotone ph-translate text-3xl text-[#6C91B5]"></i>
+                        </div>
+                        <a href="tel:05038162787" class="mt-4 flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-[#B8CDE1]/60 font-mono font-bold text-xl text-[#456A8D] hover:shadow-md transition">
+                            050-3816-2787 <i class="ph-bold ph-phone-outgoing"></i>
+                        </a>
+                        <p class="text-xs leading-relaxed text-milk-600 mt-3">事故、疾病、自然災害或一般旅遊資訊皆可詢問，全年 365 天提供服務。</p>
+                    </article>
+
+                    <article class="rounded-2xl bg-[#F3F8F2] border border-[#BCD3BA]/70 p-5 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-[#4F7B56] bg-white/80 px-2 py-1 rounded-full mb-2">24 小時・急病判斷</span>
+                                <h3 class="font-bold text-milk-900 text-lg">救急安心中心大阪</h3>
+                            </div>
+                            <i class="ph-duotone ph-stethoscope text-3xl text-[#6F9875]"></i>
+                        </div>
+                        <div class="mt-4 grid grid-cols-2 gap-2">
+                            <a href="tel:%237119" class="flex items-center justify-center bg-white rounded-xl px-3 py-3 border border-[#BCD3BA]/60 font-mono font-bold text-lg text-[#456B4B] hover:shadow-md transition">#7119</a>
+                            <a href="tel:0665827119" class="flex items-center justify-center bg-white rounded-xl px-3 py-3 border border-[#BCD3BA]/60 font-mono font-bold text-sm text-[#456B4B] hover:shadow-md transition">06-6582-7119</a>
+                        </div>
+                        <p class="text-xs leading-relaxed text-milk-600 mt-3">由護理師在醫師支援下提供急病、受傷與是否需要救護車的諮詢，主要為日文服務。</p>
+                    </article>
+                </section>
+
+                <section class="bg-white rounded-[1.6rem] border border-milk-200 shadow-sm p-5 md:p-6 mb-5">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-11 h-11 rounded-2xl bg-jp-yellow/35 text-[#8A722F] flex items-center justify-center"><i class="ph-duotone ph-magnifying-glass text-2xl"></i></div>
+                        <div>
+                            <h3 class="font-bold text-milk-900 text-lg">即時找醫院與諮詢</h3>
+                            <p class="text-xs text-milk-500 mt-0.5">營業狀況與語言支援會異動，出發前先電話確認。</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <a href="https://www.mfis.pref.osaka.jp/apqq/qq/men/pwtpmenult01.aspx" target="_blank" rel="noopener" class="group rounded-2xl bg-milk-100 border border-milk-200 p-4 hover:border-milk-400 hover:shadow-md transition">
+                            <div class="flex items-center justify-between gap-3"><span class="font-bold text-milk-900">大阪府醫療機關資訊系統</span><i class="ph-bold ph-arrow-square-out text-milk-400 group-hover:text-milk-700"></i></div>
+                            <p class="text-xs text-milk-500 mt-2 leading-relaxed">查詢目前看診中的醫院；大阪府救急醫療資訊中心：<strong class="font-mono text-milk-700">06-6693-1199</strong>（24 小時）。</p>
+                        </a>
+                        <a href="https://www.amdamedicalcenter.com/" target="_blank" rel="noopener" class="group rounded-2xl bg-milk-100 border border-milk-200 p-4 hover:border-milk-400 hover:shadow-md transition">
+                            <div class="flex items-center justify-between gap-3"><span class="font-bold text-milk-900">AMDA 多語醫療諮詢</span><i class="ph-bold ph-arrow-square-out text-milk-400 group-hover:text-milk-700"></i></div>
+                            <p class="text-xs text-milk-500 mt-2 leading-relaxed">多語醫療諮詢與院所介紹：<strong class="font-mono text-milk-700">0120-339-266</strong>／<strong class="font-mono text-milk-700">03-6233-9266</strong>，時段與語言以官網為準。</p>
+                        </a>
+                        <a href="tel:%238000" class="group rounded-2xl bg-milk-100 border border-milk-200 p-4 hover:border-milk-400 hover:shadow-md transition">
+                            <div class="flex items-center justify-between gap-3"><span class="font-bold text-milk-900">小兒救急電話相談</span><i class="ph-bold ph-phone-outgoing text-milk-400 group-hover:text-milk-700"></i></div>
+                            <p class="text-xs text-milk-500 mt-2 leading-relaxed"><strong class="font-mono text-milk-700">#8000</strong>／<strong class="font-mono text-milk-700">06-6765-3650</strong>，每日 19:00 至翌日 08:00，主要為日文服務。</p>
+                        </a>
+                        <a href="https://www.japan.travel/hk/plan/hotline/" target="_blank" rel="noopener" class="group rounded-2xl bg-milk-100 border border-milk-200 p-4 hover:border-milk-400 hover:shadow-md transition">
+                            <div class="flex items-center justify-between gap-3"><span class="font-bold text-milk-900">JNTO 中文說明頁</span><i class="ph-bold ph-arrow-square-out text-milk-400 group-hover:text-milk-700"></i></div>
+                            <p class="text-xs text-milk-500 mt-2 leading-relaxed">可查看訪日旅客熱線服務內容及日本警察、消防與救護等緊急聯絡方式。</p>
+                        </a>
+                    </div>
+                </section>
+
+                <section class="mb-5">
+                    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4 px-1">
+                        <div>
+                            <h3 class="font-bold text-milk-900 text-xl flex items-center gap-2"><i class="ph-duotone ph-hospital text-2xl text-milk-600"></i> 官方 PDF 列示院所</h3>
+                            <p class="text-xs text-milk-500 mt-1 leading-relaxed">以下整理自駐大阪辦事處發布的中文就醫參考資料；原文件建立於 2019 年，請務必先電話確認看診與中文服務。</p>
+                        </div>
+                        <span class="shrink-0 self-start sm:self-auto text-[10px] font-bold text-[#A85C56] bg-[#FFF0ED] border border-[#E8BBB5] px-3 py-1.5 rounded-full">非即時門診表</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                            <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">綜合診所</div><h4 class="font-bold text-milk-900 text-lg">Ishii Clinic 石井診所</h4></div><a href="tel:0663573313" aria-label="撥打石井診所" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
+                            <p class="text-xs text-milk-600 mt-3 leading-relaxed">外科、內科、腸胃科、牙科及口腔外科。PDF 記載平日至晚間、週六上午看診。</p>
+                            <div class="mt-3 space-y-2 text-xs"><a href="tel:0663573313" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6357-3313</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市北区菅栄町10-12" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市北區菅榮町 10-12</span></a></div>
+                        </article>
+
+                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                            <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">內科・復健</div><h4 class="font-bold text-milk-900 text-lg">TATSUE 醫院</h4></div><a href="tel:0666902399" aria-label="撥打 TATSUE 醫院" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
+                            <p class="text-xs text-milk-600 mt-3 leading-relaxed">內科、腸胃消化器科、循環科及復健科。PDF 記載平日約看診至 19:00。</p>
+                            <div class="mt-3 space-y-2 text-xs"><a href="tel:0666902399" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6690-2399</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市住吉区長居東4丁目21-28" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市住吉區長居東 4 丁目 21-28</span></a></div>
+                        </article>
+
+                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                            <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">眼科・難波</div><h4 class="font-bold text-milk-900 text-lg">王眼科</h4></div><a href="tel:0666301016" aria-label="撥打王眼科" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
+                            <p class="text-xs text-milk-600 mt-3 leading-relaxed">位於難波附近。PDF 記載平日看診至約 17:00，請先聯繫確認。</p>
+                            <div class="mt-3 space-y-2 text-xs"><a href="tel:0666301016" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6630-1016</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市中央区難波4丁目6-8" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市中央區難波 4 丁目 6-8</span></a></div>
+                        </article>
+
+                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                            <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">眼科・生野區</div><h4 class="font-bold text-milk-900 text-lg">KAMIZURU 眼科</h4></div><a href="tel:0667412525" aria-label="撥打 KAMIZURU 眼科" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
+                            <p class="text-xs text-milk-600 mt-3 leading-relaxed">官方 PDF 列示可作為中文就醫參考，掛號及語言服務請先電話確認。</p>
+                            <div class="mt-3 space-y-2 text-xs"><a href="tel:0667412525" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6741-2525</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市生野区林寺1丁目3-13" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市生野區林寺 1 丁目 3-13</span></a></div>
+                        </article>
+
+                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                            <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">耳鼻喉科・日本橋</div><h4 class="font-bold text-milk-900 text-lg">日本橋耳鼻咽喉科醫院</h4></div><a href="tel:0664842255" aria-label="撥打日本橋耳鼻咽喉科" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
+                            <p class="text-xs text-milk-600 mt-3 leading-relaxed">位於三共日本橋大樓 2 樓，鄰近日本橋與道頓堀區域。</p>
+                            <div class="mt-3 space-y-2 text-xs"><a href="tel:0664842255" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6484-2255</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市中央区日本橋1丁目3-1" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市中央區日本橋 1 丁目 3-1，三共日本橋大樓 2F</span></a></div>
+                        </article>
+
+                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                            <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">大型綜合醫院</div><h4 class="font-bold text-milk-900 text-lg">大阪市立綜合醫療中心</h4></div><a href="tel:0669291221" aria-label="撥打大阪市立綜合醫療中心" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
+                            <p class="text-xs text-milk-600 mt-3 leading-relaxed">大型醫療中心；非緊急就診、轉診規定及語言支援請先電話確認。</p>
+                            <div class="mt-3 space-y-2 text-xs"><a href="tel:0669291221" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6929-1221</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市都島区都島本通2丁目13-22" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市都島區都島本通 2-13-22</span></a></div>
+                        </article>
+
+                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm md:col-span-2">
+                            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">大型綜合醫院・關西機場附近</div><h4 class="font-bold text-milk-900 text-lg">Rinku 綜合醫療中心</h4></div><a href="tel:0724693111" class="inline-flex items-center justify-center gap-2 bg-milk-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-milk-700 transition"><i class="ph-bold ph-phone"></i>072-469-3111</a></div>
+                            <p class="text-xs text-milk-600 mt-3 leading-relaxed">位於臨空城、鄰近關西國際機場，適合第五天臨空城或機場附近發生急病時作為參考。</p>
+                            <a href="https://www.google.com/maps/search/?api=1&query=大阪府泉佐野市りんくう往来北2-23" target="_blank" rel="noopener" class="mt-3 flex items-start gap-2 text-xs text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>〒598-8577 大阪府泉佐野市りんくう往來北 2-23</span></a>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    <article class="rounded-2xl bg-white border border-milk-200 p-5 shadow-sm">
+                        <h3 class="font-bold text-milk-900 flex items-center gap-2"><i class="ph-duotone ph-backpack text-xl text-milk-600"></i>就醫前準備</h3>
+                        <ul class="mt-3 space-y-2 text-sm text-milk-600 leading-relaxed list-disc pl-5">
+                            <li>護照、旅遊保險資料與信用卡／現金。</li>
+                            <li>現用藥物、過敏史與慢性病資料。</li>
+                            <li>飯店名稱、地址及可聯絡的同行家人。</li>
+                            <li>先確認能否直接就診、是否需要轉診及通譯費用。</li>
+                        </ul>
+                    </article>
+                    <article class="rounded-2xl bg-[#FFF9EB] border border-[#E8D8A5] p-5 shadow-sm">
+                        <h3 class="font-bold text-[#725E27] flex items-center gap-2"><i class="ph-duotone ph-warning-circle text-xl"></i>使用提醒</h3>
+                        <p class="mt-3 text-sm text-[#77693F] leading-relaxed">本頁是旅行緊急備忘，不是醫療診斷。若出現意識不清、呼吸困難、胸部或頭部劇烈疼痛、突然無法說話等緊急症狀，請直接撥打 <strong>119</strong>。</p>
+                    </article>
+                </section>
+
+                <section class="rounded-2xl border border-milk-300/70 bg-milk-100 p-5 text-xs text-milk-500 leading-relaxed">
+                    <div class="font-bold text-milk-700 mb-2 flex items-center gap-2"><i class="ph-bold ph-link"></i>資料來源</div>
+                    <div class="flex flex-col gap-2">
+                        <a href="https://www.roc-taiwan.org/jposa/post/13456.html" target="_blank" rel="noopener" class="hover:text-milk-800 underline underline-offset-2">台北駐大阪經濟文化辦事處：大阪地區可使用中文就醫相關參考資訊</a>
+                        <a href="https://www.roc-taiwan.org/uploads/sites/51/2019/02/%E4%B8%AD%E6%96%87%E9%86%AB%E9%99%A2.pdf" target="_blank" rel="noopener" class="hover:text-milk-800 underline underline-offset-2">官方中文院所 PDF</a>
+                        <span>緊急電話及即時查詢服務另參考大阪市消防局、大阪府醫療機關資訊系統、JNTO 與 AMDA 官方資訊。最後整理：2026/07/28。</span>
+                    </div>
+                </section>
             </div>
         </main>
         
