@@ -51,9 +51,12 @@
     <style>
         html, body { min-height: 100%; }
         body { background-color: #F2EBE5; color: #5C544E; }
+        .text-milk-400 { color: #988579 !important; }
+        .text-milk-500 { color: #7F6F64 !important; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        ::placeholder { color: #C8B6A6 !important; opacity: 1; }
+        ::placeholder { color: #9C897C !important; opacity: 1; }
+        :focus-visible { outline: 3px solid rgba(141, 123, 104, 0.48); outline-offset: 2px; }
         .list-move, .list-enter-active, .list-leave-active { transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1); }
         .list-enter-from, .list-leave-to { opacity: 0; transform: translateY(10px); }
         .list-leave-active { position: absolute; }
@@ -75,6 +78,20 @@
             align-items: center;
             justify-content: center;
             padding: 0;
+        }
+        .route-marker {
+            align-items: center;
+            background: #8D7B68;
+            border: 3px solid #FDFBF7;
+            border-radius: 999px;
+            box-shadow: 0 3px 10px rgba(66, 59, 56, 0.28);
+            color: white;
+            display: flex;
+            font-size: 12px;
+            font-weight: 700;
+            height: 32px;
+            justify-content: center;
+            width: 32px;
         }
         @media (pointer: coarse) {
             button, a, select, input[type="time"] { min-height: 44px; }
@@ -115,29 +132,29 @@
                     </div>
                 </div>
                 <div class="flex items-center justify-between sm:justify-end gap-2 shrink-0 w-full sm:w-auto">
-                    <button @click="showTodoModal = true" class="bg-white/10 text-white hover:bg-white/20 p-2.5 rounded-2xl transition border border-white/10 relative" title="待辦清單">
+                    <button @click="showTodoModal = true" class="bg-white/10 text-white hover:bg-white/20 w-11 h-11 flex items-center justify-center rounded-2xl transition border border-white/10 relative" title="待辦清單" aria-label="開啟待辦清單">
                         <i class="ph-bold ph-check-square text-lg"></i>
                         <div v-if="incompleteTodosCount > 0" class="absolute -top-1 -right-1 w-4 h-4 bg-jp-red rounded-full flex items-center justify-center text-[9px] font-bold border border-milk-600">{{ incompleteTodosCount }}</div>
                     </button>
-                    <button @click="copyShareLink" class="bg-white/10 text-white hover:bg-white/20 p-2.5 rounded-2xl transition border border-white/10" title="複製分享連結">
+                    <button @click="copyShareLink" class="bg-white/10 text-white hover:bg-white/20 w-11 h-11 flex items-center justify-center rounded-2xl transition border border-white/10" title="複製分享連結" aria-label="複製分享連結">
                         <i class="ph-bold ph-share-network text-lg"></i>
                     </button>
-                    <div class="flex bg-black/10 p-1 rounded-2xl backdrop-blur-sm">
-                        <button @click="viewMode = 'plan'" :class="viewMode === 'plan' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/60 hover:text-white'" class="p-2 rounded-xl transition-all"><i class="ph-fill ph-calendar-check text-lg"></i></button>
-                        <button @click="viewMode = 'map'" :class="viewMode === 'map' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/60 hover:text-white'" class="p-2 rounded-xl transition-all"><i class="ph-fill ph-map-trifold text-lg"></i></button>
-                        <button @click="viewMode = 'money'" :class="viewMode === 'money' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/60 hover:text-white'" class="p-2 rounded-xl transition-all"><i class="ph-fill ph-currency-dollar text-lg"></i></button>
-                        <button @click="viewMode = 'medical'" :class="viewMode === 'medical' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/60 hover:text-white'" class="p-2 rounded-xl transition-all" title="大阪醫療資訊" aria-label="切換至大阪醫療資訊"><i class="ph-fill ph-heartbeat text-lg"></i></button>
+                    <div class="hidden sm:flex bg-black/10 p-1 rounded-2xl backdrop-blur-sm">
+                        <button @click="viewMode = 'plan'" :class="viewMode === 'plan' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/80 hover:text-white'" class="w-11 h-11 flex items-center justify-center rounded-xl transition-all" title="行程" aria-label="切換至行程"><i class="ph-fill ph-calendar-check text-lg"></i></button>
+                        <button @click="viewMode = 'map'" :class="viewMode === 'map' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/80 hover:text-white'" class="w-11 h-11 flex items-center justify-center rounded-xl transition-all" title="地圖" aria-label="切換至地圖"><i class="ph-fill ph-map-trifold text-lg"></i></button>
+                        <button @click="viewMode = 'money'" :class="viewMode === 'money' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/80 hover:text-white'" class="w-11 h-11 flex items-center justify-center rounded-xl transition-all" title="記帳" aria-label="切換至記帳"><i class="ph-fill ph-currency-dollar text-lg"></i></button>
+                        <button @click="viewMode = 'medical'" :class="viewMode === 'medical' ? 'bg-white text-milk-700 shadow-sm' : 'text-white/80 hover:text-white'" class="w-11 h-11 flex items-center justify-center rounded-xl transition-all" title="大阪醫療資訊" aria-label="切換至大阪醫療資訊"><i class="ph-fill ph-heartbeat text-lg"></i></button>
                     </div>
                 </div>
             </div>
             <div class="flex overflow-x-auto hide-scroll px-4 md:px-7 pb-4 space-x-3 snap-x">
-                <div v-for="(day, index) in days" :key="index" @click="currentDayIdx = index" 
+                <button v-for="(day, index) in days" :key="index" @click="currentDayIdx = index" :aria-label="'切換至第 ' + (index + 1) + ' 天行程'"
                      class="snap-center shrink-0 flex flex-col items-center justify-center w-14 h-16 rounded-2xl cursor-pointer transition-all border-2" 
-                     :class="currentDayIdx === index ? 'bg-milk-100 text-milk-700 border-white shadow-md scale-105 -translate-y-1' : 'bg-white/10 text-white/70 border-transparent hover:bg-white/20'">
+                     :class="currentDayIdx === index ? 'bg-milk-100 text-milk-700 border-white shadow-md scale-105 -translate-y-1' : 'bg-white/10 text-white/80 border-transparent hover:bg-white/20'">
                     <span class="text-[10px] font-medium opacity-80 tracking-wide font-mono">{{ day.shortDate || 'Day' }}</span>
                     <span class="text-xl font-bold leading-none font-mono">{{ index + 1 }}</span>
-                </div>
-                <button @click="addDay" class="shrink-0 w-12 h-16 rounded-2xl flex items-center justify-center border-2 border-white/30 border-dashed text-white/50 hover:text-white hover:border-white transition"><i class="ph-bold ph-plus"></i></button>
+                </button>
+                <button v-if="isEditMode" @click="addDay" aria-label="新增一天" class="shrink-0 w-12 h-16 rounded-2xl flex items-center justify-center border-2 border-white/40 border-dashed text-white/80 hover:text-white hover:border-white transition"><i class="ph-bold ph-plus"></i></button>
             </div>
         </header>
 
@@ -154,43 +171,71 @@
                                 <div class="flex items-center gap-3 mb-2">
                                     <div class="relative">
                                         <div class="text-xs text-milk-500 font-bold tracking-wider uppercase bg-milk-200 px-2 py-1 rounded-lg">{{ currentDay.fullDate || '請選擇日期' }}</div>
-                                        <input type="date" :value="currentDay.fullDate" @change="updateDate($event, currentDay)" class="absolute inset-0 opacity-0 cursor-pointer">
+                                        <input v-if="isEditMode" type="date" :value="currentDay.fullDate" @change="updateDate($event, currentDay)" aria-label="修改行程日期" class="absolute inset-0 opacity-0 cursor-pointer">
                                     </div>
                                     <div v-if="getWeather(currentDay.fullDate)" class="flex items-center gap-1.5 text-milk-600 bg-blue-50/50 px-2 py-1 rounded-lg animate-fade-in">
                                         <i :class="['ph-duotone', getWeather(currentDay.fullDate).icon]" class="text-lg text-jp-blue"></i>
                                         <span class="text-xs font-bold font-mono">{{ getWeather(currentDay.fullDate).min }}° - {{ getWeather(currentDay.fullDate).max }}°</span>
                                     </div>
                                 </div>
-                                <input v-model="currentDay.title" @change="saveData" class="text-xl font-bold text-milk-800 bg-transparent border-b border-transparent hover:border-milk-300 focus:border-milk-500 focus:outline-none w-full transition-colors placeholder-milk-300" placeholder="輸入今日主題...">
+                                <input v-if="isEditMode" v-model="currentDay.title" @change="saveData" class="text-xl font-bold text-milk-800 bg-transparent border-b border-transparent hover:border-milk-300 focus:border-milk-500 focus:outline-none w-full transition-colors placeholder-milk-300" placeholder="輸入今日主題...">
+                                <h2 v-else class="text-xl md:text-2xl font-bold text-milk-900 leading-snug">{{ currentDay.title }}</h2>
                             </div>
-                            <button @click="sortAndSave" class="text-xs text-milk-600 bg-milk-200 px-3 py-1.5 rounded-full border border-milk-300 hover:bg-milk-300 transition-colors flex items-center gap-1 font-bold shrink-0">
-                                <i class="ph-bold ph-sort-ascending"></i> 排序
-                            </button>
+                            <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+                                <button v-if="isEditMode" @click="sortAndSave" class="min-h-11 text-xs text-milk-700 bg-milk-200 px-3 py-2 rounded-xl border border-milk-300 hover:bg-milk-300 transition-colors flex items-center justify-center gap-1 font-bold">
+                                    <i class="ph-bold ph-sort-ascending"></i> 排序
+                                </button>
+                                <button @click="isEditMode = !isEditMode" class="min-h-11 text-xs px-3 py-2 rounded-xl border transition-colors flex items-center justify-center gap-1.5 font-bold" :class="isEditMode ? 'bg-milk-700 text-white border-milk-700' : 'bg-white text-milk-700 border-milk-300'">
+                                    <i :class="isEditMode ? 'ph-bold ph-check' : 'ph-bold ph-pencil-simple'"></i>{{ isEditMode ? '完成編輯' : '編輯行程' }}
+                                </button>
+                            </div>
                         </div>
                     </div>
+
+                    <section v-if="!isEditMode && nextItem" class="mb-5 rounded-[1.5rem] bg-gradient-to-r from-milk-800 to-milk-700 text-white p-5 shadow-md relative overflow-hidden" aria-label="下一站摘要">
+                        <div class="absolute -right-8 -bottom-10 w-32 h-32 bg-white/10 rounded-full blur-xl"></div>
+                        <div class="relative z-10 flex items-start gap-4">
+                            <div class="shrink-0 rounded-2xl bg-white/15 border border-white/20 px-3 py-2 text-center min-w-[76px]">
+                                <div class="text-[11px] text-white/80 font-bold tracking-wider">{{ nextItemLabel }}</div>
+                                <div class="font-mono text-xl font-bold mt-0.5">{{ nextItem.time }}</div>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="text-xs text-white/80 font-bold mb-1">{{ getTypeLabel(nextItem.type) }}</div>
+                                <h3 class="text-lg md:text-xl font-bold leading-snug">{{ nextItem.activity }}</h3>
+                                <p class="text-sm text-white/85 mt-1.5 leading-relaxed"><i class="ph-fill ph-map-pin mr-1"></i>{{ nextItem.location }}</p>
+                                <p v-if="nextItem.note" class="text-sm text-white/75 mt-2 leading-relaxed">{{ nextItem.note }}</p>
+                            </div>
+                            <a v-if="nextItem.location" :href="getMapsUrl(nextItem.location)" target="_blank" rel="noopener" class="shrink-0 min-w-11 h-11 px-3 rounded-xl bg-white text-milk-800 flex items-center justify-center gap-2 font-bold text-sm shadow" aria-label="導航至下一站">
+                                <i class="ph-bold ph-navigation-arrow text-lg"></i><span class="hidden md:inline">開始導航</span>
+                            </a>
+                        </div>
+                    </section>
 
                     <div v-if="currentDay.flight" class="mb-6 relative bg-jp-blue rounded-[1.5rem] text-white shadow-md overflow-hidden p-5">
                         <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
                         <div class="flex justify-between items-center mb-3 relative z-10">
                             <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded-full text-white/90 font-bold tracking-widest backdrop-blur-sm">FLIGHT</span>
-                            <button @click="currentDay.flight = null; saveData()" class="text-white/50 hover:text-white transition"><i class="ph-bold ph-x"></i></button>
+                            <button v-if="isEditMode" @click="currentDay.flight = null; saveData()" aria-label="刪除航班" class="w-11 h-11 flex items-center justify-center text-white/80 hover:text-white transition"><i class="ph-bold ph-x"></i></button>
                         </div>
                         <div class="flex justify-between items-center text-center relative z-10">
                             <div class="flex flex-col items-center">
-                                <input v-model="currentDay.flight.start" @change="saveData" class="bg-transparent text-3xl font-bold text-center w-20 focus:outline-none font-mono" placeholder="TPE">
-                                <input v-model="currentDay.flight.time" @change="saveData" type="time" aria-label="航班起飛時間" class="time-field block bg-white/10 text-white text-sm font-bold text-center rounded-xl px-2 mt-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                                <input v-if="isEditMode" v-model="currentDay.flight.start" @change="saveData" class="bg-transparent text-3xl font-bold text-center w-20 focus:outline-none font-mono" placeholder="TPE">
+                                <strong v-else class="text-3xl font-bold font-mono">{{ currentDay.flight.start }}</strong>
+                                <input v-if="isEditMode" v-model="currentDay.flight.time" @change="saveData" type="time" aria-label="航班起飛時間" class="time-field block bg-white/10 text-white text-sm font-bold text-center rounded-xl px-2 mt-2 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/50">
+                                <span v-else class="block bg-white/15 text-white text-sm font-bold rounded-xl px-3 py-2 mt-2 border border-white/20">{{ currentDay.flight.time }}</span>
                             </div>
                             <div class="flex flex-col items-center gap-1 opacity-80">
                                 <i class="ph-fill ph-airplane-tilt text-2xl"></i>
                                 <div class="w-12 h-0.5 bg-white/30 rounded-full"></div>
                             </div>
                             <div class="flex flex-col items-center">
-                                <input v-model="currentDay.flight.end" @change="saveData" class="bg-transparent text-3xl font-bold text-center w-20 focus:outline-none font-mono" placeholder="KIX">
+                                <input v-if="isEditMode" v-model="currentDay.flight.end" @change="saveData" class="bg-transparent text-3xl font-bold text-center w-20 focus:outline-none font-mono" placeholder="KIX">
+                                <strong v-else class="text-3xl font-bold font-mono">{{ currentDay.flight.end }}</strong>
                                 <span class="block text-xs text-white/80 mt-1">抵達</span>
                             </div>
                         </div>
                     </div>
-                    <button v-else-if="currentDayIdx === 0 || currentDayIdx === days.length - 1" @click="addFlight" class="w-full py-3 mb-6 border-2 border-dashed border-jp-blue/30 text-jp-blue/70 rounded-[1.5rem] text-sm font-bold hover:bg-white/40 hover:border-jp-blue/50 transition flex items-center justify-center gap-2 group">
+                    <button v-else-if="isEditMode && (currentDayIdx === 0 || currentDayIdx === days.length - 1)" @click="addFlight" class="w-full py-3 mb-6 border-2 border-dashed border-jp-blue/30 text-jp-blue/70 rounded-[1.5rem] text-sm font-bold hover:bg-white/40 hover:border-jp-blue/50 transition flex items-center justify-center gap-2 group">
                         <i class="ph-duotone ph-airplane-tilt group-hover:scale-110 transition-transform"></i> 新增航班資訊
                     </button>
 
@@ -200,31 +245,36 @@
                                 <div class="timeline-dot absolute -left-[31px] top-6 w-3 h-3 rounded-full border-2 border-milk-200 ring-2 ring-white z-10 transition-colors duration-300" :class="getTypeDotColor(item.type)"></div>
                                 <div class="relative bg-milk-100 p-4 pr-14 rounded-[1.2rem] shadow-sm border border-transparent hover:border-milk-300/50 hover:shadow-md transition-all flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-start">
                                     <div class="flex flex-row sm:flex-col items-center gap-2 w-full sm:w-28 shrink-0">
-                                        <input v-model="item.time" @change="sortAndSave" type="time" :aria-label="item.activity + '時間'" class="time-field text-base font-bold text-milk-800 bg-milk-200/60 rounded-xl px-2 text-center border border-milk-300/60 focus:bg-white focus:border-milk-500 focus:ring-2 focus:ring-milk-300/50 outline-none cursor-pointer font-mono transition-colors">
-                                        <select v-model="item.type" @change="saveData" aria-label="行程類型" class="h-11 sm:h-9 text-xs sm:text-[11px] flex-1 sm:w-full text-center bg-milk-200/40 rounded-xl border border-milk-300/50 px-2 text-milk-600 font-bold focus:ring-2 focus:ring-milk-300 cursor-pointer hover:text-milk-800">
+                                        <input v-if="isEditMode" v-model="item.time" @change="sortAndSave" type="time" :aria-label="item.activity + '時間'" class="time-field text-base font-bold text-milk-800 bg-milk-200/60 rounded-xl px-2 text-center border border-milk-300/60 focus:bg-white focus:border-milk-500 focus:ring-2 focus:ring-milk-300/50 outline-none cursor-pointer font-mono transition-colors">
+                                        <div v-else class="time-field flex items-center justify-center text-base font-bold text-milk-900 bg-milk-200/70 rounded-xl px-3 text-center border border-milk-300/70 font-mono">{{ item.time }}</div>
+                                        <select v-if="isEditMode" v-model="item.type" @change="saveData" aria-label="行程類型" class="h-11 sm:h-9 text-xs sm:text-[11px] flex-1 sm:w-full text-center bg-milk-200/40 rounded-xl border border-milk-300/50 px-2 text-milk-700 font-bold focus:ring-2 focus:ring-milk-300 cursor-pointer hover:text-milk-800">
                                             <option value="spot">📍 景點</option>
                                             <option value="food">🍴 美食</option>
                                             <option value="shop">🛍️ 購物</option>
                                             <option value="transport">🚇 交通</option>
                                             <option value="hotel">🛏️ 住宿</option>
                                         </select>
+                                        <div v-else class="h-11 sm:h-9 flex-1 sm:w-full flex items-center justify-center rounded-xl bg-white border border-milk-300/70 px-2 text-xs text-milk-700 font-bold">{{ getTypeLabel(item.type) }}</div>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <input v-model="item.activity" @change="saveData" :title="item.activity" class="w-full text-base font-bold text-milk-800 bg-transparent border-none p-0 focus:ring-0 placeholder-milk-300" placeholder="行程名稱...">
+                                        <input v-if="isEditMode" v-model="item.activity" @change="saveData" :title="item.activity" class="w-full text-base font-bold text-milk-800 bg-transparent border-none p-0 focus:ring-0 placeholder-milk-300" placeholder="行程名稱...">
+                                        <h3 v-else class="w-full text-lg font-bold text-milk-900 leading-snug">{{ item.activity }}</h3>
                                         <div class="flex items-center gap-1.5 mt-1.5 text-xs text-milk-500">
                                             <i class="ph-duotone ph-map-pin text-milk-600"></i>
-                                            <input v-model="item.location" @change="saveData" class="flex-1 bg-transparent border-none p-0 focus:ring-0 truncate text-milk-500 placeholder-milk-300" placeholder="地點/地址">
+                                            <input v-if="isEditMode" v-model="item.location" @change="saveData" class="flex-1 bg-transparent border-none p-0 focus:ring-0 truncate text-milk-600 placeholder-milk-300" placeholder="地點/地址">
+                                            <span v-else class="flex-1 text-sm text-milk-700 leading-relaxed">{{ item.location }}</span>
                                             <a v-if="item.location" :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(item.location)" target="_blank" aria-label="在 Google Maps 開啟" class="w-11 h-11 -my-3 flex items-center justify-center text-milk-400 hover:text-milk-600 hover:bg-milk-200 rounded-xl transition"><i class="ph-bold ph-arrow-square-out"></i></a>
                                         </div>
                                         <div class="mt-2.5">
-                                            <textarea v-model="item.note" @change="saveData" rows="2" class="w-full text-xs text-milk-600 bg-milk-200/50 rounded-lg p-2.5 border-none resize-none focus:bg-white focus:ring-1 focus:ring-milk-300 placeholder-milk-300 transition-colors" placeholder="備註 (例如: 必吃菜單、門票價格)"></textarea>
+                                            <textarea v-if="isEditMode" v-model="item.note" @change="saveData" rows="2" class="w-full text-sm text-milk-700 bg-milk-200/50 rounded-lg p-2.5 border-none resize-none focus:bg-white focus:ring-1 focus:ring-milk-300 placeholder-milk-300 transition-colors" placeholder="備註 (例如: 必吃菜單、門票價格)"></textarea>
+                                            <p v-else-if="item.note" class="w-full text-sm text-milk-700 bg-milk-200/60 rounded-xl p-3 leading-relaxed">{{ item.note }}</p>
                                         </div>
                                     </div>
-                                    <button @click="removeItem(idx)" aria-label="刪除行程" class="absolute right-2 bottom-2 w-11 h-11 flex items-center justify-center text-milk-300 hover:text-jp-red/80 hover:bg-jp-red/10 rounded-xl transition"><i class="ph-bold ph-trash"></i></button>
+                                    <button v-if="isEditMode" @click="removeItem(idx)" aria-label="刪除行程" class="absolute right-2 bottom-2 w-11 h-11 flex items-center justify-center text-milk-500 hover:text-jp-red/80 hover:bg-jp-red/10 rounded-xl transition"><i class="ph-bold ph-trash"></i></button>
                                 </div>
                             </div>
                         </transition-group>
-                        <button @click="addItem" class="flex items-center justify-center gap-2 text-milk-500 font-bold text-sm py-3 px-4 hover:bg-milk-300/30 rounded-2xl transition w-full mt-6 border border-dashed border-milk-300 group">
+                        <button v-if="isEditMode" @click="addItem" class="flex items-center justify-center gap-2 text-milk-700 font-bold text-sm py-3 px-4 hover:bg-milk-300/30 rounded-2xl transition w-full mt-6 border border-dashed border-milk-400 group">
                             <span class="bg-milk-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs group-hover:scale-110 transition-transform"><i class="ph-bold ph-plus"></i></span>
                             新增行程
                         </button>
@@ -235,12 +285,15 @@
             <!-- Map Mode -->
             <div v-if="viewMode === 'map'" class="h-full w-full relative">
                 <div id="map" class="h-full w-full bg-[#E6D8CC]"></div>
-                <div class="absolute bottom-6 left-4 right-4 bg-white/90 backdrop-blur-md rounded-2xl p-4 shadow-lg z-[400] flex justify-between items-center border border-white/50">
+                <div class="absolute bottom-20 sm:bottom-6 left-4 right-4 bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-lg z-[400] flex justify-between items-center gap-3 border border-white/70">
                     <div class="text-xs">
                         <span class="font-bold text-milk-800 block text-sm mb-0.5">Day {{ currentDayIdx + 1 }} 地圖</span>
-                        <span class="text-milk-500 flex items-center gap-1"><div class="w-1.5 h-1.5 bg-jp-green rounded-full"></div> {{ currentDay.items.filter(i=>i.location).length }} 個地點</span>
+                        <span v-if="mapStatus.state === 'loading'" class="text-milk-700 flex items-center gap-1.5"><i class="ph-bold ph-spinner animate-spin"></i>正在整理路線…</span>
+                        <span v-else class="text-milk-700 flex items-center gap-1.5"><span class="w-2 h-2 bg-jp-green rounded-full"></span>已定位 {{ mapStatus.located }}／{{ mapStatus.total }} 個地點</span>
+                        <span v-if="mapStatus.skipped" class="text-milk-600 block mt-1">已略過 {{ mapStatus.skipped }} 個大阪區域外的交通點。</span>
+                        <span v-if="mapStatus.failed.length" class="text-[#A85C56] block mt-1">{{ mapStatus.failed.length }} 個地點未定位，仍可用行程卡開啟 Google Maps。</span>
                     </div>
-                    <button @click="renderMap" class="bg-milk-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-milk-700 transition active:scale-95">重新整理</button>
+                    <button @click="renderMap" class="min-w-11 min-h-11 bg-milk-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-milk-800 transition active:scale-95">重新整理</button>
                 </div>
             </div>
 
@@ -365,7 +418,15 @@
                     </div>
                 </section>
 
-                <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 mb-5">
+                <nav class="sticky top-0 z-20 -mx-4 px-4 py-3 mb-4 bg-milk-200/95 backdrop-blur-md border-y border-white/60 overflow-x-auto hide-scroll" aria-label="醫療資訊快速篩選">
+                    <div class="flex gap-2 min-w-max md:justify-center">
+                        <button v-for="filter in medicalFilters" :key="filter.id" @click="medicalFilter = filter.id" class="min-h-11 px-4 rounded-xl text-sm font-bold border transition flex items-center gap-2" :class="medicalFilter === filter.id ? 'bg-milk-800 text-white border-milk-800 shadow-sm' : 'bg-white text-milk-700 border-milk-300 hover:border-milk-500'">
+                            <i :class="filter.icon"></i>{{ filter.label }}
+                        </button>
+                    </div>
+                </nav>
+
+                <section v-show="medicalFilter === 'all' || medicalFilter === 'emergency' || medicalFilter === 'chinese'" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 mb-5">
                     <article class="rounded-2xl bg-[#FFF4F2] border border-[#E7B8B3]/60 p-5 shadow-sm">
                         <div class="flex items-start justify-between gap-3">
                             <div>
@@ -410,7 +471,7 @@
                     </article>
                 </section>
 
-                <section class="bg-white rounded-[1.6rem] border border-milk-200 shadow-sm p-5 md:p-6 mb-5">
+                <section v-show="medicalFilter !== 'airport'" class="bg-white rounded-[1.6rem] border border-milk-200 shadow-sm p-5 md:p-6 mb-5">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="w-11 h-11 rounded-2xl bg-jp-yellow/35 text-[#8A722F] flex items-center justify-center"><i class="ph-duotone ph-magnifying-glass text-2xl"></i></div>
                         <div>
@@ -419,11 +480,11 @@
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <a href="https://www.mfis.pref.osaka.jp/apqq/qq/men/pwtpmenult01.aspx" target="_blank" rel="noopener" class="group rounded-2xl bg-milk-100 border border-milk-200 p-4 hover:border-milk-400 hover:shadow-md transition">
+                        <a v-show="medicalFilter !== 'child'" href="https://www.mfis.pref.osaka.jp/apqq/qq/men/pwtpmenult01.aspx" target="_blank" rel="noopener" class="group rounded-2xl bg-milk-100 border border-milk-200 p-4 hover:border-milk-400 hover:shadow-md transition">
                             <div class="flex items-center justify-between gap-3"><span class="font-bold text-milk-900">大阪府醫療機關資訊系統</span><i class="ph-bold ph-arrow-square-out text-milk-400 group-hover:text-milk-700"></i></div>
                             <p class="text-xs text-milk-500 mt-2 leading-relaxed">查詢目前看診中的醫院；大阪府救急醫療資訊中心：<strong class="font-mono text-milk-700">06-6693-1199</strong>（24 小時）。</p>
                         </a>
-                        <a href="https://www.amdamedicalcenter.com/" target="_blank" rel="noopener" class="group rounded-2xl bg-milk-100 border border-milk-200 p-4 hover:border-milk-400 hover:shadow-md transition">
+                        <a v-show="medicalFilter !== 'child'" href="https://www.amdamedicalcenter.com/" target="_blank" rel="noopener" class="group rounded-2xl bg-milk-100 border border-milk-200 p-4 hover:border-milk-400 hover:shadow-md transition">
                             <div class="flex items-center justify-between gap-3"><span class="font-bold text-milk-900">AMDA 多語醫療諮詢</span><i class="ph-bold ph-arrow-square-out text-milk-400 group-hover:text-milk-700"></i></div>
                             <p class="text-xs text-milk-500 mt-2 leading-relaxed">多語醫療諮詢與院所介紹：<strong class="font-mono text-milk-700">0120-339-266</strong>／<strong class="font-mono text-milk-700">03-6233-9266</strong>，時段與語言以官網為準。</p>
                         </a>
@@ -431,14 +492,14 @@
                             <div class="flex items-center justify-between gap-3"><span class="font-bold text-milk-900">小兒救急電話相談</span><i class="ph-bold ph-phone-outgoing text-milk-400 group-hover:text-milk-700"></i></div>
                             <p class="text-xs text-milk-500 mt-2 leading-relaxed"><strong class="font-mono text-milk-700">#8000</strong>／<strong class="font-mono text-milk-700">06-6765-3650</strong>，每日 19:00 至翌日 08:00，主要為日文服務。</p>
                         </a>
-                        <a href="https://www.japan.travel/hk/plan/hotline/" target="_blank" rel="noopener" class="group rounded-2xl bg-milk-100 border border-milk-200 p-4 hover:border-milk-400 hover:shadow-md transition">
+                        <a v-show="medicalFilter !== 'child'" href="https://www.japan.travel/hk/plan/hotline/" target="_blank" rel="noopener" class="group rounded-2xl bg-milk-100 border border-milk-200 p-4 hover:border-milk-400 hover:shadow-md transition">
                             <div class="flex items-center justify-between gap-3"><span class="font-bold text-milk-900">JNTO 中文說明頁</span><i class="ph-bold ph-arrow-square-out text-milk-400 group-hover:text-milk-700"></i></div>
                             <p class="text-xs text-milk-500 mt-2 leading-relaxed">可查看訪日旅客熱線服務內容及日本警察、消防與救護等緊急聯絡方式。</p>
                         </a>
                     </div>
                 </section>
 
-                <section class="mb-5">
+                <section v-show="medicalFilter === 'all' || medicalFilter === 'chinese' || medicalFilter === 'airport'" class="mb-5">
                     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4 px-1">
                         <div>
                             <h3 class="font-bold text-milk-900 text-xl flex items-center gap-2"><i class="ph-duotone ph-hospital text-2xl text-milk-600"></i> 官方 PDF 列示院所</h3>
@@ -448,37 +509,37 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                        <article v-show="medicalFilter !== 'airport'" class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
                             <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">綜合診所</div><h4 class="font-bold text-milk-900 text-lg">Ishii Clinic 石井診所</h4></div><a href="tel:0663573313" aria-label="撥打石井診所" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
                             <p class="text-xs text-milk-600 mt-3 leading-relaxed">外科、內科、腸胃科、牙科及口腔外科。PDF 記載平日至晚間、週六上午看診。</p>
                             <div class="mt-3 space-y-2 text-xs"><a href="tel:0663573313" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6357-3313</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市北区菅栄町10-12" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市北區菅榮町 10-12</span></a></div>
                         </article>
 
-                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                        <article v-show="medicalFilter !== 'airport'" class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
                             <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">內科・復健</div><h4 class="font-bold text-milk-900 text-lg">TATSUE 醫院</h4></div><a href="tel:0666902399" aria-label="撥打 TATSUE 醫院" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
                             <p class="text-xs text-milk-600 mt-3 leading-relaxed">內科、腸胃消化器科、循環科及復健科。PDF 記載平日約看診至 19:00。</p>
                             <div class="mt-3 space-y-2 text-xs"><a href="tel:0666902399" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6690-2399</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市住吉区長居東4丁目21-28" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市住吉區長居東 4 丁目 21-28</span></a></div>
                         </article>
 
-                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                        <article v-show="medicalFilter !== 'airport'" class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
                             <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">眼科・難波</div><h4 class="font-bold text-milk-900 text-lg">王眼科</h4></div><a href="tel:0666301016" aria-label="撥打王眼科" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
                             <p class="text-xs text-milk-600 mt-3 leading-relaxed">位於難波附近。PDF 記載平日看診至約 17:00，請先聯繫確認。</p>
                             <div class="mt-3 space-y-2 text-xs"><a href="tel:0666301016" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6630-1016</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市中央区難波4丁目6-8" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市中央區難波 4 丁目 6-8</span></a></div>
                         </article>
 
-                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                        <article v-show="medicalFilter !== 'airport'" class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
                             <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">眼科・生野區</div><h4 class="font-bold text-milk-900 text-lg">KAMIZURU 眼科</h4></div><a href="tel:0667412525" aria-label="撥打 KAMIZURU 眼科" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
                             <p class="text-xs text-milk-600 mt-3 leading-relaxed">官方 PDF 列示可作為中文就醫參考，掛號及語言服務請先電話確認。</p>
                             <div class="mt-3 space-y-2 text-xs"><a href="tel:0667412525" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6741-2525</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市生野区林寺1丁目3-13" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市生野區林寺 1 丁目 3-13</span></a></div>
                         </article>
 
-                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                        <article v-show="medicalFilter !== 'airport'" class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
                             <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">耳鼻喉科・日本橋</div><h4 class="font-bold text-milk-900 text-lg">日本橋耳鼻咽喉科醫院</h4></div><a href="tel:0664842255" aria-label="撥打日本橋耳鼻咽喉科" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
                             <p class="text-xs text-milk-600 mt-3 leading-relaxed">位於三共日本橋大樓 2 樓，鄰近日本橋與道頓堀區域。</p>
                             <div class="mt-3 space-y-2 text-xs"><a href="tel:0664842255" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6484-2255</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市中央区日本橋1丁目3-1" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市中央區日本橋 1 丁目 3-1，三共日本橋大樓 2F</span></a></div>
                         </article>
 
-                        <article class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
+                        <article v-show="medicalFilter !== 'airport'" class="bg-white rounded-2xl border border-milk-200 p-5 shadow-sm">
                             <div class="flex items-start justify-between gap-3"><div><div class="text-[10px] font-bold text-milk-400 tracking-wider mb-1">大型綜合醫院</div><h4 class="font-bold text-milk-900 text-lg">大阪市立綜合醫療中心</h4></div><a href="tel:0669291221" aria-label="撥打大阪市立綜合醫療中心" class="w-11 h-11 rounded-xl bg-milk-200 text-milk-700 flex items-center justify-center hover:bg-milk-300 transition"><i class="ph-bold ph-phone"></i></a></div>
                             <p class="text-xs text-milk-600 mt-3 leading-relaxed">大型醫療中心；非緊急就診、轉診規定及語言支援請先電話確認。</p>
                             <div class="mt-3 space-y-2 text-xs"><a href="tel:0669291221" class="flex items-center gap-2 text-milk-700 font-mono"><i class="ph-duotone ph-phone"></i>06-6929-1221</a><a href="https://www.google.com/maps/search/?api=1&query=大阪市都島区都島本通2丁目13-22" target="_blank" rel="noopener" class="flex items-start gap-2 text-milk-500 hover:text-milk-800"><i class="ph-duotone ph-map-pin mt-0.5"></i><span>大阪市都島區都島本通 2-13-22</span></a></div>
@@ -518,6 +579,18 @@
                 </section>
             </div>
         </main>
+
+        <a v-if="viewMode === 'medical'" href="tel:119" class="sm:hidden absolute right-4 bottom-[5.5rem] z-40 min-w-14 h-14 px-3 rounded-2xl bg-[#9C504A] text-white shadow-xl flex flex-col items-center justify-center font-bold border-2 border-white" aria-label="撥打緊急救護 119">
+            <i class="ph-fill ph-phone-call text-lg"></i><span class="text-xs leading-none mt-0.5">119</span>
+        </a>
+
+        <nav class="sm:hidden absolute bottom-0 left-0 right-0 z-40 bg-milk-100/95 backdrop-blur-xl border-t border-milk-300 shadow-[0_-8px_24px_rgba(66,59,56,0.10)] px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]" aria-label="主要功能">
+            <div class="grid grid-cols-4 gap-1">
+                <button v-for="mode in primaryModes" :key="mode.id" @click="viewMode = mode.id" class="min-h-14 rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-bold transition" :class="viewMode === mode.id ? 'bg-milk-700 text-white shadow-sm' : 'text-milk-700 hover:bg-milk-200'" :aria-label="'切換至' + mode.label" :aria-current="viewMode === mode.id ? 'page' : null">
+                    <i :class="mode.icon" class="text-xl"></i><span>{{ mode.label }}</span>
+                </button>
+            </div>
+        </nav>
         
         <!-- Todo Modal -->
         <transition name="fade">
@@ -603,9 +676,25 @@
 
                 // --- State ---
                 const viewMode = ref('plan');
+                const isEditMode = ref(false);
                 const currentDayIdx = ref(0);
                 const tripId = ref('');
                 const itineraryVersion = '2026-07-25-bungo';
+                const medicalFilter = ref('all');
+                const medicalFilters = [
+                    { id: 'all', label: '全部', icon: 'ph-bold ph-squares-four' },
+                    { id: 'emergency', label: '緊急', icon: 'ph-bold ph-first-aid' },
+                    { id: 'child', label: '兒童', icon: 'ph-bold ph-baby' },
+                    { id: 'chinese', label: '中文院所', icon: 'ph-bold ph-translate' },
+                    { id: 'airport', label: '機場附近', icon: 'ph-bold ph-airplane-tilt' }
+                ];
+                const primaryModes = [
+                    { id: 'plan', label: '行程', icon: 'ph-fill ph-calendar-check' },
+                    { id: 'map', label: '地圖', icon: 'ph-fill ph-map-trifold' },
+                    { id: 'money', label: '記帳', icon: 'ph-fill ph-currency-dollar' },
+                    { id: 'medical', label: '醫療', icon: 'ph-fill ph-heartbeat' }
+                ];
+                const mapStatus = ref({ state: 'idle', located: 0, total: 0, failed: [], skipped: 0 });
                 
                 // Data
                 const setup = ref({ destination: '大阪五日親子旅行', currency: 'JPY', rate: 0.21 });
@@ -940,24 +1029,21 @@
                         if (docSnap.exists()) {
                             const data = docSnap.data();
                             if (data.itineraryVersion !== itineraryVersion) {
-                                const savedExpenses = data.expenses || [];
-                                const savedParticipants = data.participants || ['爸爸', '媽媽'];
-                                const savedSetup = data.setup || {};
-
+                                // 版本更新只能補齊缺少的欄位；遠端既有行程、花費與 checklist 狀態永遠優先。
                                 initDefaultData();
-                                expenses.value = savedExpenses;
-                                participants.value = savedParticipants;
-                                setup.value = { ...setup.value, ...savedSetup };
+                                if (Array.isArray(data.days) && data.days.length) days.value = data.days;
+                                if (Array.isArray(data.expenses)) expenses.value = data.expenses;
+                                if (Array.isArray(data.participants) && data.participants.length) participants.value = data.participants;
+                                if (Array.isArray(data.todos)) todos.value = data.todos;
+                                if (data.setup) setup.value = { ...setup.value, ...data.setup };
 
                                 try {
                                     await updateDoc(docRef, {
-                                        days: days.value,
-                                        todos: todos.value,
                                         itineraryVersion,
                                         lastUpdate: new Date()
                                     });
                                 } catch (error) {
-                                    console.error('更新新版行程失敗:', error);
+                                    console.error('更新資料版本標記失敗:', error);
                                 }
                                 return;
                             }
@@ -1035,6 +1121,32 @@
                 const currentDay = computed(() => days.value[currentDayIdx.value] || {});
                 const totalExpense = computed(() => expenses.value.reduce((sum, e) => sum + e.amount, 0));
                 const incompleteTodosCount = computed(() => todos.value.filter(t => !t.done).length);
+                const getTokyoNow = () => {
+                    const parts = new Intl.DateTimeFormat('en-CA', {
+                        timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit',
+                        hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+                    }).formatToParts(new Date()).reduce((acc, part) => ({ ...acc, [part.type]: part.value }), {});
+                    return { date: `${parts.year}-${parts.month}-${parts.day}`, time: `${parts.hour}:${parts.minute}` };
+                };
+                const nextItem = computed(() => {
+                    const items = [...(currentDay.value.items || [])].filter(item => item.time).sort((a, b) => a.time.localeCompare(b.time));
+                    if (!items.length) return null;
+                    const now = getTokyoNow();
+                    if (currentDay.value.fullDate > now.date) return items[0];
+                    if (currentDay.value.fullDate < now.date) return items[items.length - 1];
+                    return items.find(item => item.time >= now.time) || items[items.length - 1];
+                });
+                const nextItemLabel = computed(() => {
+                    const now = getTokyoNow();
+                    if (currentDay.value.fullDate > now.date) return '第一站';
+                    if (currentDay.value.fullDate < now.date) return '最後一站';
+                    return nextItem.value && nextItem.value.time >= now.time ? '下一站' : '今日完成';
+                });
+
+                const getTypeLabel = (type) => ({
+                    spot: '📍 景點', food: '🍴 美食', shop: '🛍️ 購物', transport: '🚇 交通', hotel: '🛏️ 住宿'
+                }[type] || '📌 行程');
+                const getMapsUrl = (location) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location || '')}`;
 
                 const getTypeDotColor = (t) => {
                     const colors = { food: 'bg-jp-yellow', spot: 'bg-jp-green', transport: 'bg-jp-blue', shop: 'bg-jp-red', hotel: 'bg-milk-500' };
@@ -1109,26 +1221,134 @@
                 };
 
                 let map = null;
+                let mapRenderId = 0;
+                const geocodeCache = new Map();
+                const knownMapPlaces = [
+                    { keys: ['關西國際機場', '関西空港駅', 'kix'], lat: 34.4347, lng: 135.2440 },
+                    { keys: ['the park front hotel', '園前景飯店'], lat: 34.6670, lng: 135.4370 },
+                    { keys: ['hotel kintetsu universal city'], lat: 34.6676, lng: 135.4386 },
+                    { keys: ['universal studios japan', 'usj'], lat: 34.6657, lng: 135.4323 },
+                    { keys: ['omo7'], lat: 34.6496, lng: 135.5014 },
+                    { keys: ['通天閣'], lat: 34.6525, lng: 135.5063 },
+                    { keys: ['蟹道樂'], lat: 34.6687, lng: 135.5012 },
+                    { keys: ['難波八阪神社'], lat: 34.6616, lng: 135.4966 },
+                    { keys: ['edion', '愛電王'], lat: 34.6644, lng: 135.5011 },
+                    { keys: ['道頓堀'], lat: 34.6687, lng: 135.5010 },
+                    { keys: ['心齋橋筋商店街'], lat: 34.6740, lng: 135.5011 },
+                    { keys: ['西心斎橋1-10-28', 'elk 心齋橋'], lat: 34.6737, lng: 135.4982 },
+                    { keys: ['南船場3-5-11', 'hoka 心齋橋'], lat: 34.6777, lng: 135.5011 },
+                    { keys: ['釣船茶屋', 'ざうお 難波'], lat: 34.6660, lng: 135.5063 },
+                    { keys: ['大阪城御座船'], lat: 34.6869, lng: 135.5266 },
+                    { keys: ['osaka castle', '大阪城'], lat: 34.6873, lng: 135.5262 },
+                    { keys: ['kids plaza', '大阪兒童樂園'], lat: 34.7047, lng: 135.5103 },
+                    { keys: ['扇町', '天神橋筋商店街'], lat: 34.7054, lng: 135.5101 },
+                    { keys: ['harukas 300'], lat: 34.6463, lng: 135.5133 },
+                    { keys: ['焼肉ホルモン ブンゴ', 'bungo 天王寺'], lat: 34.6457, lng: 135.5124 },
+                    { keys: ['住吉大社'], lat: 34.6126, lng: 135.4929 },
+                    { keys: ['新今宮駅'], lat: 34.6501, lng: 135.5019 },
+                    { keys: ['りんくうタウン駅'], lat: 34.4102, lng: 135.3008 },
+                    { keys: ['seacle', 'シークル', '臨空之星摩天輪'], lat: 34.4092, lng: 135.3007 },
+                    { keys: ['rinku premium outlets'], lat: 34.4065, lng: 135.2979 },
+                    { keys: ['rinku park', '臨空公園', '大理石海灘'], lat: 34.4066, lng: 135.2898 }
+                ];
+                const extractMapTarget = (location) => {
+                    const parts = String(location || '').split('→');
+                    return parts[parts.length - 1].trim();
+                };
+                const isOutsideKansai = (location) => /桃園|新竹|\btpe\b/i.test(extractMapTarget(location));
+                const resolveKnownPoint = (location) => {
+                    const target = extractMapTarget(location).toLowerCase();
+                    if (!target || isOutsideKansai(location)) return null;
+                    const match = knownMapPlaces.find(place => place.keys.some(key => target.includes(key.toLowerCase())));
+                    return match ? { lat: match.lat, lng: match.lng, target } : null;
+                };
+                const geocodePoint = async (location) => {
+                    const target = extractMapTarget(location);
+                    if (!target || isOutsideKansai(location)) return null;
+                    if (geocodeCache.has(target)) return geocodeCache.get(target);
+                    try {
+                        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ja&q=${encodeURIComponent(target + ' 大阪 日本')}`);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const data = await response.json();
+                        const lat = Number(data?.[0]?.lat);
+                        const lng = Number(data?.[0]?.lon);
+                        const point = Number.isFinite(lat) && Number.isFinite(lng) && lat >= 33.5 && lat <= 35.5 && lng >= 134.5 && lng <= 136.5 ? { lat, lng, target } : null;
+                        geocodeCache.set(target, point);
+                        return point;
+                    } catch (error) {
+                        console.warn('地圖定位失敗：', target, error);
+                        geocodeCache.set(target, null);
+                        return null;
+                    }
+                };
+                const escapeMapText = (value) => String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
                 const renderMap = async () => {
+                    const renderId = ++mapRenderId;
                     await nextTick();
                     if (!document.getElementById('map')) return;
                     if (map) { map.remove(); map = null; }
-                    map = L.map('map').setView([34.6937, 135.5023], 12);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                    const items = currentDay.value.items.filter(i => i.location);
-                    if(items.length === 0) return;
-                    for (let item of items) {
-                        try {
-                            await new Promise(r => setTimeout(r, 600)); 
-                            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(item.location + ' ' + setup.value.destination)}`);
-                            const data = await res.json();
-                            if (data && data.length > 0) {
-                                const lat = data[0].lat;
-                                const lon = data[0].lon;
-                                L.marker([lat, lon]).addTo(map).bindPopup(`<b>${item.activity}</b><br>${item.location}`);
-                            }
-                        } catch(e) {}
+                    map = L.map('map', { zoomControl: true }).setView([34.6937, 135.5023], 12);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(map);
+                    L.control.scale({ imperial: false }).addTo(map);
+
+                    const allEntries = (currentDay.value.items || []).map((item, dayIndex) => ({ item, dayIndex })).filter(entry => entry.item.location);
+                    const entries = allEntries.filter(entry => !isOutsideKansai(entry.item.location));
+                    const skipped = allEntries.length - entries.length;
+                    mapStatus.value = { state: 'loading', located: 0, total: entries.length, failed: [], skipped };
+                    if (!entries.length) {
+                        mapStatus.value.state = 'empty';
+                        return;
                     }
+
+                    const routePoints = [];
+                    const failures = [];
+                    const overlapping = new Map();
+                    for (let index = 0; index < entries.length; index += 1) {
+                        if (renderId !== mapRenderId) return;
+                        const { item, dayIndex } = entries[index];
+                        let point = resolveKnownPoint(item.location);
+                        if (!point) point = await geocodePoint(item.location);
+                        if (!point) {
+                            failures.push(item.activity || item.location);
+                            continue;
+                        }
+
+                        const key = `${point.lat.toFixed(4)},${point.lng.toFixed(4)}`;
+                        const overlapIndex = overlapping.get(key) || 0;
+                        overlapping.set(key, overlapIndex + 1);
+                        const angle = overlapIndex * 1.9;
+                        const offset = overlapIndex ? 0.00016 * Math.ceil(overlapIndex / 2) : 0;
+                        const plottedPoint = [point.lat + Math.sin(angle) * offset, point.lng + Math.cos(angle) * offset];
+                        routePoints.push(plottedPoint);
+
+                        const markerIcon = L.divIcon({
+                            className: '',
+                            html: `<div class="route-marker">${dayIndex + 1}</div>`,
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16]
+                        });
+                        L.marker(plottedPoint, { icon: markerIcon }).addTo(map).bindPopup(
+                            `<div style="min-width:180px"><strong>${dayIndex + 1}. ${escapeMapText(item.activity)}</strong><br><span>${escapeMapText(item.time)}・${escapeMapText(item.location)}</span></div>`
+                        );
+                    }
+
+                    if (routePoints.length > 1) {
+                        L.polyline(routePoints, { color: '#8D7B68', weight: 4, opacity: 0.78, dashArray: '8 8' }).addTo(map);
+                    }
+                    if (routePoints.length) {
+                        map.fitBounds(L.latLngBounds(routePoints), { paddingTopLeft: [38, 38], paddingBottomRight: [38, 130], maxZoom: 14 });
+                    }
+                    mapStatus.value = {
+                        state: routePoints.length ? (failures.length ? 'partial' : 'success') : 'error',
+                        located: routePoints.length,
+                        total: entries.length,
+                        failed: failures,
+                        skipped
+                    };
+                    setTimeout(() => map?.invalidateSize(), 50);
                 };
 
                 watch(viewMode, (v) => { if (v === 'map') renderMap(); });
@@ -1137,11 +1357,13 @@
                 onMounted(() => { initAuth(); });
 
                 return {
-                    viewMode, days, currentDay, currentDayIdx, expenses, newExpense, totalExpense, setup,
+                    viewMode, isEditMode, primaryModes, days, currentDay, currentDayIdx, expenses, newExpense, totalExpense, setup,
                     isLoading, user, tripId, syncStatus, participants, newParticipantName, showPayerSettings, showRateEdit,
-                    getTypeDotColor, getPayerColor, addItem, removeItem, addDay, addFlight, addExpense, removeExpense,
+                    getTypeDotColor, getTypeLabel, getMapsUrl, getPayerColor, nextItem, nextItemLabel,
+                    addItem, removeItem, addDay, addFlight, addExpense, removeExpense,
                     renderMap, copyShareLink, saveData, sortAndSave, addParticipant, removeParticipant, updateDate, getWeather,
-                    todos, newTodo, showTodoModal, addTodo, removeTodo, incompleteTodosCount
+                    todos, newTodo, showTodoModal, addTodo, removeTodo, incompleteTodosCount,
+                    medicalFilter, medicalFilters, mapStatus
                 };
             }
         }).mount('#app')
